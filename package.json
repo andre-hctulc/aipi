@@ -1,33 +1,19 @@
 {
-    "name": "cis",
-    "private": true,
+    "name": "@andre-hctulc/aipi",
     "version": "0.1.0",
-    "bin": {
-        "cis": "bin/cis.js"
-    },
     "scripts": {
         "build": "tsc",
         "tc": "tsc --noEmit",
-        "tc:watch": "tsc -w --noEmit",
-        "test": "jest",
-        "deploy": "npm run build && npm run test && cdk deploy",
-        "updates": "cdk diff",
-        "updates:print": "cdk synth",
-        "destroy": "cdk destroy"
+        "tc:watch": "tsc -w --noEmit"
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",
         "@types/node": "22.5.4",
         "aws-cdk": "2.158.0",
         "jest": "^29.7.0",
-        "ts-jest": "^29.2.5",
-        "ts-node": "^10.9.2",
-        "typescript": "~5.6.2"
+        "ts-jest": "^29.2.5"
     },
     "dependencies": {
-        "aws-cdk-lib": "2.158.0",
-        "constructs": "^10.0.0",
-        "openai": "^4.62.0",
-        "source-map-support": "^0.5.21"
+        "openai": "^4.62.0"
     }
 }

@@ -1,9 +1,11 @@
-import { client } from "../client";
+import { findProvider } from "../providers/providers-list";
+import type { HandlerParams, Embeddable, Vector } from "../types";
 
-type Embeddable = string | string[];
-type Vector = number[];
-export async function handler(embeddable: Embeddable): Promise<Vector[]> {
-    const strArr = Array.isArray(embeddable) ? embeddable : [embeddable];
-    const res = await client.embeddings.create({ model: "text-embedding-3-small", input: strArr });
-    return res.data.map((d) => d.embedding);
+export interface EmbedParams extends HandlerParams {
+    content: Embeddable;
+}
+
+export async function handler(params: EmbedParams): Promise<Vector[]> {
+    const provider = findProvider(params.provider);
+    return await provider.embed();
 }
