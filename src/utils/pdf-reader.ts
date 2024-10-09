@@ -7,7 +7,7 @@ export class PDFParser extends FileParser {
         return data.text;
     }
 
-    override parses(mimeType: string): boolean {
-        return mimeType === "application/pdf";
+    override parses(file: File): boolean {
+        return file.type === "application/pdf";
     }
 }

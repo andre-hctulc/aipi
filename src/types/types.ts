@@ -4,7 +4,13 @@ export interface MetaDescription {
     model?: string;
     user?: string;
     info?: any;
-    responseFormat?: any;
+    /**
+     * Response options
+     */
+    response?: any;
+    /**
+     * Request options
+     */
     request?: any;
 }
 
@@ -37,7 +43,7 @@ export interface Result {
 }
 
 export interface Tool {
-    type: string;
+    type: ({} & string) | "function";
     name: string;
     description?: string;
     trigger?: string;
@@ -45,4 +51,20 @@ export interface Tool {
     /** JSON schema */
     schema?: any;
     id?: string;
+}
+
+export interface ToolCall {
+    /**
+     * Source tool
+     */
+    tool: string;
+    /**
+     * Generated content
+     */
+    generated?: any;
+    /**
+     * Might get set instead of `generated` when parsing the data fails
+     * */
+    generatedRaw?: any;
+    error?: unknown;
 }

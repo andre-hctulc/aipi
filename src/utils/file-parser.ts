@@ -1,4 +1,5 @@
 import { AipiError } from "../aipi-error";
+import { Registry } from "../registry";
 
 export interface FileReaderConfig {
     /**
@@ -15,13 +16,23 @@ export interface FileReaderConfig {
  * Parses the text from files. Use the `LiteralParser` for plain text files.
  */
 export abstract class FileParser {
-    constructor(readonly config: FileReaderConfig = {}) {}
+    // default config values
+    private static readonly DEFAULT_PRIORITY = 100;
+
+    private _config: FileReaderConfig;
+
+    constructor(config: FileReaderConfig = {}) {
+        this._config = config;
+    }
+
+    abstract parses(file: File): boolean;
+    protected abstract extractText(file: File): Promise<string>;
 
     /**
      * @throws `AipiError` if the `extractText` implementation fails
      */
     async text(file: File): Promise<string> {
-        if (this.config.maxSize && file.size > this.config.maxSize) {
+        if (this._config.maxSize && file.size > this._config.maxSize) {
             throw new AipiError({ message: "File size exceeds limit" });
         }
 
@@ -31,9 +42,6 @@ export abstract class FileParser {
             throw new AipiError({ message: "Failed to extract text from file", cause: err });
         }
     }
-
-    abstract parses(mimeType: string): boolean;
-    protected abstract extractText(file: File): Promise<string>;
 
     static newFile(blobParts: BlobPart[], fileName: string): File {
         return new File(blobParts, fileName);
@@ -51,6 +59,14 @@ export abstract class FileParser {
         if (source instanceof ArrayBuffer) return Buffer.from(source);
         throw new AipiError({ message: "Invalid buffer source" });
     }
+
+    static find(file: File): FileParser | null {
+        return (
+            Registry.getFileParsers()
+                .sort((fp) => -(fp._config.priority ?? this.DEFAULT_PRIORITY))
+                .find((parser) => parser.parses(file)) || null
+        );
+    }
 }
 
 /**
@@ -61,7 +77,7 @@ export class LiteralParser extends FileParser {
         return file.text();
     }
 
-    override parses(mimeType: string): boolean {
-        return ["text/plain", "application/json"].includes(mimeType);
+    override parses(file: File): boolean {
+        return ["text/plain", "application/json"].includes(file.type);
     }
 }

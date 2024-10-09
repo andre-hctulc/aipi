@@ -1,7 +1,9 @@
+import { Provider } from "../providers";
 import { FileParser, LiteralParser, PDFParser } from "../utils";
 
 enum RegistryKey {
     FILE_PARSERS = "$file_parsers",
+    PROVIDERS = "$providers",
 }
 
 export abstract class Registry {
@@ -29,9 +31,30 @@ export abstract class Registry {
 
     static useFileParser<T extends FileParser>(parser: T) {
         this.instance.register(RegistryKey.FILE_PARSERS, parser);
+        return this;
     }
 
     static getFileParsers(): FileParser[] {
         return this.instance.get<FileParser>(RegistryKey.FILE_PARSERS);
+    }
+
+    static useProvider(provider: Provider) {
+        this.instance.register(RegistryKey.PROVIDERS, provider);
+        return this;
+    }
+
+    static getProvider(): Provider | null {
+        const providers = this.instance.get<Provider>(RegistryKey.PROVIDERS);
+        return providers.length ? providers[0] : null;
+    }
+
+    static findProvider(ProviderClass: new (...args: any) => Provider): Provider | null {
+        return (
+            this.instance.get<Provider>(RegistryKey.PROVIDERS).find((p) => p instanceof ProviderClass) || null
+        );
+    }
+
+    static getProviders(): Provider[] {
+        return this.instance.get<Provider>(RegistryKey.PROVIDERS);
     }
 }
