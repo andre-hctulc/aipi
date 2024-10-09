@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { MetaDescription } from "../types";
+import { MetaDescription } from "../types/types";
 import {
     Assistants,
     CreateInput,
@@ -77,14 +77,12 @@ export class OpenAIAssistants extends Assistants {
                 after: input.from,
                 before: input.to,
                 limit: input.limit,
-                order: input.sort
+                order: input.sort,
             },
             meta.request
         );
-        
-        return res.data.map((assistant) => ({
-            
-        }));
+
+        return { assistants: res.data.map((assistant) => ({})) };
     }
 
     get(input: GetInput, meta: MetaDescription): Promise<GetResult> {

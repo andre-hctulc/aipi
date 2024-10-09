@@ -38,8 +38,11 @@ export interface Result {
 
 export interface Tool {
     type: string;
-    name?: string;
+    name: string;
+    description?: string;
     trigger?: string;
     configure?: any;
+    /** JSON schema */
+    schema?: any;
     id?: string;
 }

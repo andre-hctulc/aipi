@@ -1,4 +1,4 @@
-import type { Input, MetaDescription, Result, Tool } from "../types";
+import type { Input, MetaDescription, Result, Tool } from "../types/types";
 
 export interface AssistantRefInput extends Input {
     assistantId: string;

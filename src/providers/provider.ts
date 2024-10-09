@@ -1,5 +1,5 @@
 import { Assistants } from "../assistants/assistants";
-import { Embeddable, Input, Message, MetaDescription, Result, Tool, Vector } from "../types";
+import { Embeddable, Input, Message, MetaDescription, Result, Tool, Vector } from "../types/types";
 
 export interface EmbedInput extends Input {
     content: Embeddable[];
@@ -31,8 +31,7 @@ export interface ChatResult extends Result {
 export abstract class Provider {
     constructor() {}
 
-    abstract supportAssistants(): Assistants;
-
+    abstract supportAssistants(): Assistants | null;
     abstract embed(input: EmbedInput, meta: MetaDescription): Promise<EmbedResult>;
     abstract complete(input: CompleteInput, meta: MetaDescription): Promise<CompleteResult>;
     abstract chat(input: ChatInput, meta: MetaDescription): Promise<ChatResult>;
