@@ -1,3 +1,5 @@
+import { JSONSchema } from "./json-schema";
+
 export type Vector = number[];
 
 export interface MetaDescription {
@@ -28,7 +30,7 @@ export type Instruction = {
 export type MessageType = "user" | "system";
 
 export type Message = {
-    type: MessageType;
+    role: MessageType;
     content: string;
 };
 
@@ -45,17 +47,15 @@ export interface Result {
 export interface Tool {
     type: ({} & string) | "function";
     name: string;
-    description?: string;
     trigger?: string;
     configure?: any;
     /** JSON schema */
-    schema?: any;
-    id?: string;
+    schema?: JSONSchema;
 }
 
-export interface ToolCall {
+export interface ToolMatch {
     /**
-     * Source tool
+     * Source tool name
      */
     tool: string;
     /**

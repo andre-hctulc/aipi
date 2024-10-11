@@ -1,6 +1,6 @@
-import { ChatCompletionTool } from "openai/resources";
+import type { ChatCompletionTool, FunctionParameters } from "openai/resources";
 import { OpenAIAssistants } from "../assistants/openai-assistants";
-import { MetaDescription, ToolCall } from "../types/types";
+import { MetaDescription, ToolMatch } from "../types/types";
 import {
     ChatInput,
     ChatResult,
@@ -79,7 +79,7 @@ export class OpenAIProvider extends Provider {
                         type: "function",
                         function: {
                             name: t.name,
-                            parameters: t.schema || {
+                            parameters: (t.schema as FunctionParameters) || {
                                 type: "object",
                                 properties: {
                                     status: {
@@ -105,8 +105,8 @@ export class OpenAIProvider extends Provider {
             choices: res.choices.map((c) => ({
                 content: c.message.content || "",
                 type: c.finish_reason,
-                toolCalls:
-                    c.message.tool_calls?.map<ToolCall>((tc) => {
+                triggeredTools:
+                    c.message.tool_calls?.map<ToolMatch>((tc) => {
                         let data: any;
                         let err: Error | undefined;
 
@@ -125,17 +125,16 @@ export class OpenAIProvider extends Provider {
                     }) || [],
             })),
             raw: { choices: res.choices, created: res.created },
-            toolCalls: [],
+            triggeredTools: [],
         };
     }
 
     async createFile(input: CreateFileInput, meta: MetaDescription = {}): Promise<CreateFileResult> {
         const res = await this.client.files.create(
             {
-                purpose: input.usage,
-                ...input.configure,
+                purpose: input.usage || "assistants",
                 file: input.file,
-                user: meta.user,
+                ...input.configure,
             },
             meta.request
         );

@@ -1,7 +1,10 @@
 import { Assistants } from "../assistants/assistants";
-import { Embeddable, Input, Message, MetaDescription, Result, Tool, ToolCall, Vector } from "../types/types";
+import { Embeddable, Input, Message, MetaDescription, Result, Tool, ToolMatch, Vector } from "../types/types";
 
 export interface EmbedInput extends Input {
+    /**
+     * List of text to embed.
+     */
     content: Embeddable[];
 }
 
@@ -24,8 +27,8 @@ export interface ChatInput extends Input {
 }
 
 export interface ChatResult extends Result {
-    choices: { content: string; type: string; toolCalls: ToolCall[] }[];
-    toolCalls: ToolCall[];
+    choices: { content: string; type: string; triggeredTools: ToolMatch[] }[];
+    triggeredTools: ToolMatch[];
 }
 
 export interface CreateFileInput extends Input {
@@ -47,9 +50,9 @@ export abstract class Provider {
     constructor() {}
 
     abstract supportAssistants(): Assistants | null;
-    abstract embed(input: EmbedInput, meta: MetaDescription): Promise<EmbedResult>;
-    abstract complete(input: CompleteInput, meta: MetaDescription): Promise<CompleteResult>;
-    abstract chat(input: ChatInput, meta: MetaDescription): Promise<ChatResult>;
-    abstract createFile(input: CreateFileInput, meta: MetaDescription): Promise<CreateFileResult>;
-    abstract deleteFile(input: DeleteFileInput, meta: MetaDescription): Promise<DeleteFileResult>;
+    abstract embed(input: EmbedInput, meta?: MetaDescription): Promise<EmbedResult>;
+    abstract complete(input: CompleteInput, meta?: MetaDescription): Promise<CompleteResult>;
+    abstract chat(input: ChatInput, meta?: MetaDescription): Promise<ChatResult>;
+    abstract createFile(input: CreateFileInput, meta?: MetaDescription): Promise<CreateFileResult>;
+    abstract deleteFile(input: DeleteFileInput, meta?: MetaDescription): Promise<DeleteFileResult>;
 }

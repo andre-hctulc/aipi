@@ -67,6 +67,10 @@ export abstract class FileParser {
                 .find((parser) => parser.parses(file)) || null
         );
     }
+
+    static isJSON(file: File): boolean {
+        return file.type === "application/json";
+    }
 }
 
 /**
