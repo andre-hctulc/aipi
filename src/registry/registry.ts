@@ -1,9 +1,11 @@
 import { Provider } from "../providers";
 import { FileParser, LiteralParser, PDFParser } from "../utils";
+import { VectorStore } from "../vector-stores/vector-store";
 
 enum RegistryKey {
     FILE_PARSERS = "$file_parsers",
     PROVIDERS = "$providers",
+    VECTOR_STORES = "$vector_stores",
 }
 
 export abstract class Registry {
@@ -23,11 +25,24 @@ export abstract class Registry {
         this.registry.get(key)!.push(...values);
     }
 
+    private set<T>(key: string, values: T[]) {
+        this.registry.set(key, values);
+        return this;
+    }
+
     private get<T>(key: string): T[] {
         return this.registry.get(key) || [];
     }
 
+    private clear() {
+        this.registry.clear();
+    }
+
     private static instance: Registry = new (class extends Registry {})();
+
+    static clear() {
+        this.instance.clear();
+    }
 
     static useFileParser<T extends FileParser>(parser: T) {
         this.instance.register(RegistryKey.FILE_PARSERS, parser);
@@ -56,5 +71,19 @@ export abstract class Registry {
 
     static getProviders(): Provider[] {
         return this.instance.get<Provider>(RegistryKey.PROVIDERS);
+    }
+
+    static useVectorStore(store: VectorStore) {
+        this.instance.register(RegistryKey.VECTOR_STORES, store);
+        return this;
+    }
+
+    static getVectorStore(): VectorStore | null {
+        const vectorStores = this.instance.get<VectorStore>(RegistryKey.VECTOR_STORES);
+        return vectorStores.length ? vectorStores[0] : null;
+    }
+
+    static getVectorStores(): VectorStore[] {
+        return this.instance.get<VectorStore>(RegistryKey.VECTOR_STORES);
     }
 }

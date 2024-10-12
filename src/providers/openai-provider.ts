@@ -79,6 +79,8 @@ export class OpenAIProvider extends Provider {
                         type: "function",
                         function: {
                             name: t.name,
+                            // When no parameters are defined empty parameters will b e created
+                            // So we create a default schema if no schema is provided
                             parameters: (t.schema as FunctionParameters) || {
                                 type: "object",
                                 properties: {

@@ -4,7 +4,7 @@ export type InputObject = {
 
 export type Variables = Record<string, any>;
 
-export type InputPart = string | undefined | null | InputObject | InputPart[];
+export type InputPart = string | undefined | null | false | InputObject | InputPart[];
 
 export abstract class InputBuilder {
     private _text: string = "";
@@ -71,6 +71,7 @@ export abstract class InputBuilder {
     }
 
     private static parseInputPart(input: InputPart): string {
+        if (!input) return "";
         if (typeof input === "string") return input;
         if (Array.isArray(input)) return input.map((i) => this.parseInputPart(i)).join("");
         if (typeof input === "object") return this.parseInputPart(input?.input || "");
@@ -79,9 +80,20 @@ export abstract class InputBuilder {
     }
 
     /**
-     * Joins the input parts with no separator
+     * **Text**
+     * 
+     * Joins the input parts with a space separator
      */
     static t(...input: InputPart[]): string {
+        return this.join(" ", ...input);
+    }
+
+    /**
+     * **Concat**
+     *
+     * Joins the input parts with no separator
+     */
+    static c(...input: InputPart[]): string {
         return this.join("", ...input);
     }
 
@@ -90,6 +102,8 @@ export abstract class InputBuilder {
     }
 
     /**
+     * **Paragraphs**
+     *
      * Joins the input parts with a newline separator
      */
     static p(...input: InputPart[]) {
