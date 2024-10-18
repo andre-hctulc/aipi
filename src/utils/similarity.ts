@@ -1,12 +1,12 @@
-import { Vector } from "../types";
-import math from "mathjs";
+import type { Vector } from "../types";
+import { dot, norm, multiply, divide } from "mathjs";
 
 /**
  * Calculate the cosine similarity between two vectors.
  */
 export function cosineSimilarity(vect1: Vector, vect2: Vector): number {
-    const dotProduct = math.dot(vect1, vect2);
-    const magnitudeA = math.norm(vect1);
-    const magnitudeB = math.norm(vect2);
-    return math.divide(dotProduct, math.multiply(magnitudeA, magnitudeB)) as number;
+    const dotProduct = dot(vect1, vect2);
+    const magnitudeA = norm(vect1);
+    const magnitudeB = norm(vect2);
+    return divide(dotProduct, multiply(magnitudeA, magnitudeB)) as number;
 }

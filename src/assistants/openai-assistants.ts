@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { MetaDescription } from "../types/types";
+import type { MetaDescription } from "../types/types";
 import {
     Assistants,
     CreateInput,
@@ -13,7 +13,7 @@ import {
     UpdateInput,
     UpdateResult,
 } from "./assistants";
-import { OpenAIProvider } from "../providers/openai-provider";
+import type { OpenAIProvider } from "../providers/openai-provider";
 import { AipiError } from "../aipi-error";
 
 export class OpenAIAssistants extends Assistants {
@@ -48,10 +48,11 @@ export class OpenAIAssistants extends Assistants {
                 } else if (tool.type === "file_search") {
                     return { type: "file_search", ...input.configure };
                 } else {
-                    throw new AipiError(
-                        "Invalid tool type. Expected 'function', 'code_interpreter', or 'file_search'. Received: " +
-                            tool.type
-                    );
+                    throw new AipiError({
+                        message:
+                            "Invalid tool type. Expected 'function', 'code_interpreter', or 'file_search'. Received: " +
+                            tool.type,
+                    });
                 }
             }),
             ...input.configure,

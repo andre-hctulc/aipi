@@ -1,5 +1,14 @@
-import { Assistants } from "../assistants/assistants";
-import { Embeddable, Input, Message, MetaDescription, Result, Tool, ToolMatch, Vector } from "../types/types";
+import type { Assistants } from "../assistants/assistants";
+import type {
+    Embeddable,
+    Input,
+    Message,
+    MetaDescription,
+    Result,
+    Tool,
+    ToolMatch,
+    Vector,
+} from "../types/types";
 
 export interface EmbedInput extends Input {
     /**

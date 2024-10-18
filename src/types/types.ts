@@ -1,4 +1,4 @@
-import { JSONSchema } from "./json-schema";
+import type { JSONSchema } from "./json-schema";
 
 export type Vector = number[];
 
@@ -68,3 +68,14 @@ export interface ToolMatch {
     generatedRaw?: any;
     error?: unknown;
 }
+
+export type Falsy = false | null | undefined;
+
+/**
+ * Get all keys of an object including nested keys.
+ */
+export type NestedProperties<T> = T extends object
+    ? {
+          [K in keyof T]: K | NestedProperties<T[K]>;
+      }[keyof T]
+    : never;

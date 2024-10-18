@@ -2,7 +2,7 @@ import type { CommonQueryOptions, Vector } from "../types";
 import { VectorStore } from "./vector-store";
 import type { Client } from "@opensearch-project/opensearch";
 
-export interface OpensearchVectorStoreConfig {
+export interface OpenSearchVectorStoreConfig {
     /**
      * The name of the field to store the vector in
      * @default "vectors"
@@ -10,10 +10,10 @@ export interface OpensearchVectorStoreConfig {
     vectorFieldName?: string;
 }
 
-export class OpensearchVectorStore extends VectorStore<any> {
+export class OpenSearchVectorStore extends VectorStore<any> {
     private vectorFieldName: string;
 
-    constructor(readonly client: Client, readonly index: string, config?: OpensearchVectorStoreConfig) {
+    constructor(readonly client: Client, readonly index: string, config?: OpenSearchVectorStoreConfig) {
         super();
         this.vectorFieldName = config?.vectorFieldName || "vector";
     }
@@ -24,7 +24,7 @@ export class OpensearchVectorStore extends VectorStore<any> {
             id,
             _source: [this.vectorFieldName],
         });
-        return res.body._source[this.vectorFieldName] || null;
+        return res.body._source?.[this.vectorFieldName] || null;
     }
 
     /**

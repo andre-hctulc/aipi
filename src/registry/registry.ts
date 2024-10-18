@@ -1,5 +1,5 @@
 import { Provider } from "../providers";
-import { FileParser, LiteralParser, PDFParser } from "../utils";
+import { FileParser, LiteralParser } from "../utils";
 import { VectorStore } from "../vector-stores/vector-store";
 
 enum RegistryKey {
@@ -17,7 +17,7 @@ export abstract class Registry {
 
     private init() {
         // Init default components
-        this.register<FileParser>(RegistryKey.FILE_PARSERS, new LiteralParser(), new PDFParser());
+        this.register<FileParser>(RegistryKey.FILE_PARSERS, new LiteralParser());
     }
 
     private register<T>(key: string, ...values: T[]) {
@@ -56,6 +56,14 @@ export abstract class Registry {
     static useProvider(provider: Provider) {
         this.instance.register(RegistryKey.PROVIDERS, provider);
         return this;
+    }
+
+    static findFileParser(file: File): FileParser | null {
+        return (
+            this.getFileParsers()
+                .sort((fp) => -fp.priority)
+                .find((parser) => parser.parses(file)) || null
+        );
     }
 
     static getProvider(): Provider | null {

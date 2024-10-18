@@ -1,5 +1,4 @@
 import { AipiError, AipiErrorTag } from "../aipi-error";
-import { Registry } from "../registry";
 
 export interface FileReaderConfig {
     /**
@@ -29,6 +28,10 @@ export abstract class FileParser {
 
     constructor(config: FileReaderConfig = {}) {
         this._config = config;
+    }
+
+    get priority(): number {
+        return this._config.priority ?? FileParser.DEFAULT_PRIORITY;
     }
 
     abstract parses(file: File): boolean;
@@ -83,14 +86,6 @@ export abstract class FileParser {
         if (Buffer.isBuffer(source)) return source;
         if (source instanceof ArrayBuffer) return Buffer.from(source);
         throw new AipiError({ message: "Invalid buffer source" });
-    }
-
-    static find(file: File): FileParser | null {
-        return (
-            Registry.getFileParsers()
-                .sort((fp) => -(fp._config.priority ?? this.DEFAULT_PRIORITY))
-                .find((parser) => parser.parses(file)) || null
-        );
     }
 
     private static READABLE = new Set([

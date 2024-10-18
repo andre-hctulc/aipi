@@ -7,3 +7,4 @@ export * from "./utils";
 export * from "./types";
 export * from "./talk";
 export * from "./vector-stores";
+export * from "./registry";

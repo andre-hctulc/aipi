@@ -1,6 +1,7 @@
 export enum AipiErrorTag {
     NOT_FOUND = "not-found",
     TYPE_ERROR = "type-error",
+    NOT_SUPPORTED = "not-supported",
 }
 
 type AipiErrorInfo = {

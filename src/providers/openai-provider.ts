@@ -1,6 +1,6 @@
 import type { ChatCompletionTool, FunctionParameters } from "openai/resources";
 import { OpenAIAssistants } from "../assistants/openai-assistants";
-import { MetaDescription, ToolMatch } from "../types/types";
+import type { MetaDescription, ToolMatch } from "../types/types";
 import {
     ChatInput,
     ChatResult,

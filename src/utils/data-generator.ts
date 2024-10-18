@@ -1,6 +1,6 @@
 import { AipiError, ProviderNotFoundError } from "../aipi-error";
-import type { Provider } from "../providers";
 import { Registry } from "../registry";
+import type { Provider } from "../providers";
 import type { JSONSchema, Tool } from "../types";
 
 type SchemaMap<D extends Record<string, any>> = {
@@ -14,11 +14,11 @@ export interface GenerateOptions {
     /**
      * System message to setup the AI
      */
-    systemMessage?: string;
+    systemMessages?: string[];
     /**
      * User message that triggers generating data
      */
-    userMessage?: string;
+    userMessages?: string[];
     tooTrigger?: string;
 }
 
@@ -42,8 +42,8 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
      */
     async generate<T>(schema: JSONSchema, options?: Omit<GenerateOptions, "toolTrigger">): Promise<T> {
         const opts = { ...this._config, ...options };
-        const sysMsg = opts.systemMessage || "You are a data generator.";
-        const userMsg = opts.userMessage || "Please generate some data.";
+        const sysMsg = opts.systemMessages || ["You are a data generator."];
+        const userMsg = opts.userMessages || ["Please generate some data."];
         const provider = opts.provider || Registry.getProvider();
 
         if (!provider) throw new ProviderNotFoundError();
@@ -51,8 +51,8 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
         const res = await provider.chat(
             {
                 messages: [
-                    { content: sysMsg, role: "system" },
-                    { content: userMsg, role: "user" },
+                    ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
+                    ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
                 ],
             },
             { response: schema }
@@ -88,8 +88,8 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
 
         const opts = { ...this._config, ...options };
 
-        const sysMsg = opts.systemMessage || "You are a data generator.";
-        const userMsg = opts.userMessage || "Please generate some data.";
+        const sysMsg = opts.systemMessages || ["You are a data generator."];
+        const userMsg = opts.userMessages || ["Please generate some data."];
         const trigger = opts.tooTrigger || "Generate data";
 
         const entries = Array.from(this._fields.entries());
@@ -118,8 +118,8 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
 
         const res = await provider.chat({
             messages: [
-                { content: sysMsg, role: "system" },
-                { content: userMsg, role: "user" },
+                ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
+                ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
             ],
             tools,
         });
