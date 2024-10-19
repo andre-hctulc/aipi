@@ -1,4 +1,5 @@
-import type { Assistants } from "../assistants/assistants";
+import { Assistant } from "../assistants/assistant";
+import { CommonQueryOptions } from "../types";
 import type {
     Embeddable,
     Input,
@@ -21,23 +22,14 @@ export interface EmbedResult extends Result {
     vectors: Vector[];
 }
 
-export interface CompleteInput extends Input {
-    messages?: Message[];
-    prompt: string;
-}
-
-export interface CompleteResult extends Result {
-    choices: { content: string; type: string }[];
-}
-
 export interface ChatInput extends Input {
     messages: Message[];
     tools?: Tool[];
 }
 
 export interface ChatResult extends Result {
-    choices: { content: string; type: string; triggeredTools: ToolMatch[] }[];
-    triggeredTools: ToolMatch[];
+    responseMessages: Message[];
+    toolMatches: ToolMatch[];
 }
 
 export interface CreateFileInput extends Input {
@@ -55,13 +47,108 @@ export interface DeleteFileInput extends Input {
 
 export interface DeleteFileResult extends Result {}
 
-export abstract class Provider {
+export interface ListAssistantsInput extends Input {
+    query?: CommonQueryOptions;
+}
+
+export interface ListAssistantsResult<A extends Assistant = Assistant> extends Result {
+    assistants: A[];
+}
+
+export interface CreateAssistantInput extends Input {
+    /**
+     * Unique name of the assistant.
+     */
+    name: string;
+    instructions: string;
+    description?: string;
+    metadata?: any;
+    tools?: Tool[];
+    resources?: any;
+}
+
+export interface CreateAssistantResult<A extends Assistant = Assistant> extends Result {
+    assistant: A;
+}
+
+export interface GetAssistantInput extends Result {
+    assistantId: string;
+}
+
+export interface GetAssistantResult<A extends Assistant = Assistant> extends Result {
+    assistant: A;
+}
+
+export interface UpdateAssistantInput extends Input {
+    assistantId: string;
+    /**
+     * The update data
+     */
+    data: {
+        instructions?: string;
+        description?: string;
+        metadata?: any;
+        tools?: Tool[];
+        name?: string;
+        resources?: any;
+    };
+}
+
+export interface UpdateAssistantResult extends Result {
+    updated: boolean;
+}
+
+export interface DeleteAssistantInput extends Input {
+    assistantId: string;
+}
+
+export interface DeleteAssistantResult extends Result {
+    deleted: boolean;
+}
+
+export abstract class Provider<A extends Assistant = Assistant> {
     constructor() {}
 
-    abstract supportAssistants(): Assistants | null;
+    // -- Embeddings
+
     abstract embed(input: EmbedInput, meta?: MetaDescription): Promise<EmbedResult>;
-    abstract complete(input: CompleteInput, meta?: MetaDescription): Promise<CompleteResult>;
-    abstract chat(input: ChatInput, meta?: MetaDescription): Promise<ChatResult>;
+
+    // -- Files
+
     abstract createFile(input: CreateFileInput, meta?: MetaDescription): Promise<CreateFileResult>;
     abstract deleteFile(input: DeleteFileInput, meta?: MetaDescription): Promise<DeleteFileResult>;
+
+    // -- Chat
+
+    abstract chat(input: ChatInput, meta?: MetaDescription): Promise<ChatResult>;
+
+    // -- Assistants
+
+    abstract listAssistants(
+        input: ListAssistantsInput,
+        meta: MetaDescription
+    ): Promise<ListAssistantsResult<A>>;
+
+    abstract createAssistant(
+        input: CreateAssistantInput,
+        meta: MetaDescription
+    ): Promise<CreateAssistantResult<A>>;
+
+    abstract getAssistant(input: GetAssistantInput, meta: MetaDescription): Promise<GetAssistantResult<A>>;
+
+    /**
+     * @returns updated?
+     */
+    abstract updateAssistant(
+        input: UpdateAssistantInput,
+        meta: MetaDescription
+    ): Promise<UpdateAssistantResult>;
+
+    /**
+     * @returns deleted?
+     */
+    abstract deleteAssistant(
+        input: DeleteAssistantInput,
+        meta: MetaDescription
+    ): Promise<DeleteAssistantResult>;
 }

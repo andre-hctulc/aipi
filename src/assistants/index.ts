@@ -1,2 +1,1 @@
-export * from "./assistants";
-export * from "./openai-assistants";
+export * from "./assistant";

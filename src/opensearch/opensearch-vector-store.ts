@@ -1,6 +1,6 @@
 import type { CommonQueryOptions, Vector } from "../types";
-import { VectorStore } from "./vector-store";
 import type { Client } from "@opensearch-project/opensearch";
+import { VectorStore } from "../vector-stores";
 
 export interface OpenSearchVectorStoreConfig {
     /**

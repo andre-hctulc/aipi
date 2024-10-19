@@ -1,7 +1,8 @@
 import { AipiError, ProviderNotFoundError } from "../aipi-error";
 import { Registry } from "../registry";
 import type { Provider } from "../providers";
-import type { JSONSchema, Tool } from "../types";
+import type { JSONSchema, Message, Tool, ToolMatch } from "../types";
+import { Assistant } from "../assistants";
 
 type SchemaMap<D extends Record<string, any>> = {
     [K in keyof D]: {
@@ -23,7 +24,15 @@ export interface GenerateOptions {
 }
 
 export interface DataGeneratorConfig extends GenerateOptions {
+    /**
+     * Used to identify tools and other data. Defaults to current time.
+     */
+    id?: string;
     provider?: Provider;
+    /**
+     * Use an assistant chat instead of normal chat for generating data
+     */
+    assistant?: Assistant;
 }
 
 /**
@@ -32,9 +41,11 @@ export interface DataGeneratorConfig extends GenerateOptions {
 export class DataGenerator<D extends Record<string, any> = Record<string, unknown>> {
     private _config: DataGeneratorConfig;
     private _fields = new Map<keyof D, { additionalToolData?: Partial<Tool> }>();
+    readonly id: string;
 
     constructor(config: DataGeneratorConfig) {
         this._config = config;
+        this.id = config.id ?? Date.now().toString();
     }
 
     /**
@@ -48,18 +59,28 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
 
         if (!provider) throw new ProviderNotFoundError();
 
-        const res = await provider.chat(
-            {
-                messages: [
-                    ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
-                    ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
-                ],
-            },
-            { response: schema }
-        );
+        const inputMessages = [
+            ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
+            ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
+        ];
+        let responseMessages: Message[];
+
+        if (opts.assistant) {
+            const { chatId } = await opts.assistant.createChat({ messages: inputMessages });
+            const { responseMessages: rm } = await opts.assistant.createResponse({ chatId, tools: [] });
+            responseMessages = rm || [];
+        } else {
+            const { responseMessages: rm } = await provider.chat(
+                {
+                    messages: inputMessages,
+                },
+                { response: schema }
+            );
+            responseMessages = rm || [];
+        }
 
         try {
-            return JSON.parse(res.choices[0].content);
+            return JSON.parse(responseMessages[0].content);
         } catch (err) {
             throw new AipiError({
                 message: "Failed to generate data. Did not receive valid JSON.",
@@ -78,6 +99,16 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
         this._fields.set(key, { additionalToolData: tool });
     }
 
+    private createToolName(index: number) {
+        return `${index >= 10 ? index : "0" + index}_gen-tool_${this.id}`;
+    }
+
+    private parseToolName(tool: string) {
+        const matches = tool.match(/(\d{2})_gen-tool_(.+)/);
+        if (!matches) return null;
+        return { index: parseInt(matches[1]), id: matches[2] };
+    }
+
     /**
      * @param target If provided, the data will be added to this object instead of creating a new one
      * @returns The generated data
@@ -93,11 +124,12 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
         const trigger = opts.tooTrigger || "Generate data";
 
         const entries = Array.from(this._fields.entries());
+        if (entries.length > 99) throw new AipiError({ message: "Too many fields. Maximum is 99." });
 
         const tools: Tool[] = entries.map(([key, { additionalToolData }], index) => {
             return {
                 type: "function",
-                name: `<data_generator>[${index}]${key.toString()}`,
+                name: this.createToolName(index),
                 trigger,
                 ...additionalToolData,
                 schema: additionalToolData?.schema || {
@@ -116,20 +148,35 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
 
         if (!provider) throw new ProviderNotFoundError();
 
-        const res = await provider.chat({
-            messages: [
-                ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
-                ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
-            ],
-            tools,
-        });
+        const inputMessages = [
+            ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
+            ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
+        ];
 
         const result: Partial<D> = options.target || {};
+        let toolMatches: ToolMatch[];
 
-        res.choices[0].triggeredTools.forEach((toolCall) => {
-            const index = parseInt(toolCall.tool.substring(0, toolCall.tool.indexOf(",")));
-            const [key] = entries[index];
-            result[key as keyof D] = toolCall.generated;
+        if (opts.assistant) {
+            const { chatId } = await opts.assistant.createChat({ messages: inputMessages });
+            const { toolMatches: tm } = await opts.assistant.createResponse({ chatId, tools });
+            toolMatches = tm || [];
+        } else {
+            const { toolMatches: tm } = await provider.chat({ messages: inputMessages, tools });
+            toolMatches = tm || [];
+        }
+
+        toolMatches.forEach((toolCall) => {
+            if (toolCall.tool.length < 2) return;
+
+            const parsedToolName = this.parseToolName(toolCall.tool);
+
+            if (!parsedToolName) return;
+            if (parsedToolName.id !== this.id) return;
+
+            const [field] = entries[parsedToolName.index] || [""];
+            if (field === "") return;
+
+            result[field] = toolCall.generated;
         });
 
         return result;

@@ -27,11 +27,14 @@ export type Instruction = {
     content: string;
 };
 
-export type MessageType = "user" | "system";
+export type MessageType = "user" | "system" | (string & {});
 
 export type Message = {
     role: MessageType;
     content: string;
+    attachments?: any;
+    info?: any;
+    toolMatches?: ToolMatch[];
 };
 
 export interface Input {
@@ -66,7 +69,10 @@ export interface ToolMatch {
      * Might get set instead of `generated` when parsing the data fails
      * */
     generatedRaw?: any;
-    error?: unknown;
+    /**
+     * Error when parsing the data
+     */
+    parseError?: unknown;
 }
 
 export type Falsy = false | null | undefined;

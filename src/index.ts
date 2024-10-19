@@ -8,3 +8,5 @@ export * from "./types";
 export * from "./talk";
 export * from "./vector-stores";
 export * from "./registry";
+export * from "./openai";
+export * from "./opensearch";

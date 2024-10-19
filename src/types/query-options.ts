@@ -7,4 +7,8 @@ export type CommonQueryOptions = {
      * Number of results to skip
      */
     offset?: number;
+    sort?: string;
+    after?: string;
+    before?: string;
+    order?: "asc" | "desc" | ({} & string);
 };

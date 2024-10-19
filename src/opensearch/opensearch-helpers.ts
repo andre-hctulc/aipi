@@ -1,6 +1,6 @@
 import type { QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types";
 import type { Falsy, NestedProperties } from "../types";
-import { getPropPaths, isFalsy, resolvePropertyPath } from "./utils";
+import { getPropPaths, isFalsy, resolvePropertyPath } from "../utils";
 import { AipiError, AipiErrorTag } from "../aipi-error";
 
 type Field<T extends Record<string, any> = any> = NestedProperties<T>;
