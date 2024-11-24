@@ -2,28 +2,28 @@ import { AipiError, ProviderNotFoundError } from "../aipi-error";
 import { Registry } from "../registry";
 import type { Provider } from "../providers";
 import type { JSONSchema, Message, Tool, ToolMatch } from "../types";
-import { Assistant } from "../assistants";
-
-type SchemaMap<D extends Record<string, any>> = {
-    [K in keyof D]: {
-        /** Additional tool data */
-        tool?: Partial<Tool>;
-    };
-};
+import { Assistant, CreateChatInput, CreateResponseInput } from "../assistants";
 
 export interface GenerateOptions {
     /**
-     * System message to setup the AI
+     * Messages used to configure the chat that generates the data. Should contain at least one user message.
      */
-    systemMessages?: string[];
+    messages?: Message[];
+    schema?: JSONSchema;
+    jsonMode?: boolean;
+    tools?: Tool[];
     /**
-     * User message that triggers generating data
+     * Parse the response as JSON if a schema is provided.
+     * @default true
      */
-    userMessages?: string[];
-    tooTrigger?: string;
+    parse?: boolean;
 }
 
-export interface DataGeneratorConfig extends GenerateOptions {
+export interface DataGeneratorConfig {
+    /**
+     * Base generate options. Can be overwritten on a per generate basis.
+     */
+    generate?: GenerateOptions;
     /**
      * Used to identify tools and other data. Defaults to current time.
      */
@@ -32,15 +32,36 @@ export interface DataGeneratorConfig extends GenerateOptions {
     /**
      * Use an assistant chat instead of normal chat for generating data
      */
-    assistant?: Assistant;
+    assistant?: {
+        assistant: Assistant;
+        /**
+         * Additional parameters for creating the response
+         */
+        runParams?: Partial<CreateResponseInput>;
+        /**
+         * Additional parameters for creating the chat
+         */
+        createChatParams?: Partial<CreateChatInput>;
+        /**
+         * Messages for an additional run.
+         * This can be used to generate a messages in the first run and make tools trigger in the second run.
+         */
+        additionalRun?: Message[];
+    };
+    baseTools?: Tool[];
+}
+
+export interface Generated {
+    data: any;
+    toolData: Record<string, any[]>;
 }
 
 /**
  * Uses _tools_ to generate data
  */
-export class DataGenerator<D extends Record<string, any> = Record<string, unknown>> {
+export class DataGenerator {
     private _config: DataGeneratorConfig;
-    private _fields = new Map<keyof D, { additionalToolData?: Partial<Tool> }>();
+    private _fields = new Map<string, { tool: Omit<Tool, "name" | "type"> }>();
     readonly id: string;
 
     constructor(config: DataGeneratorConfig) {
@@ -48,45 +69,134 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
         this.id = config.id ?? Date.now().toString();
     }
 
-    /**
-     * Uses _chat response_ to generate data
-     */
-    async generate<T>(schema: JSONSchema, options?: Omit<GenerateOptions, "toolTrigger">): Promise<T> {
-        const opts = { ...this._config, ...options };
-        const sysMsg = opts.systemMessages || ["You are a data generator."];
-        const userMsg = opts.userMessages || ["Please generate some data."];
-        const provider = opts.provider || Registry.getProvider();
+    hasTools() {
+        return this._fields.size > 0;
+    }
 
+    async generate(options?: Omit<GenerateOptions, "toolTrigger">): Promise<Generated> {
+        const opts = { ...this._config.generate, ...options };
+        const messages: Message[] = opts.messages || [
+            { role: "system", textContent: "You are a data generator." },
+            { role: "user", textContent: "Please generate some data." },
+        ];
+        const provider = this._config.provider || Registry.getProvider();
         if (!provider) throw new ProviderNotFoundError();
 
-        const inputMessages = [
-            ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
-            ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
-        ];
-        let responseMessages: Message[];
+        const entries = Array.from(this._fields.entries());
+        if (entries.length >= 100) throw new AipiError({ message: "Too many fields. Maximum is 99." });
 
-        if (opts.assistant) {
-            const { chatId } = await opts.assistant.createChat({ messages: inputMessages });
-            const { responseMessages: rm } = await opts.assistant.createResponse({ chatId, tools: [] });
-            responseMessages = rm || [];
+        const tools: Tool[] = this._config.baseTools || [];
+
+        entries.forEach(([key, field], index) => {
+            const toolName = this.createToolName(index);
+            tools.push({
+                ...field.tool,
+                name: toolName,
+                type: "function",
+            });
+        });
+
+        // -- create chat and response
+
+        let responseMessages: Message[] = [];
+        let toolMatches: ToolMatch[] = [];
+
+        if (this._config.assistant) {
+            const assistant = this._config.assistant.assistant;
+
+            const { chatId } = await assistant.createChat({
+                ...this._config.assistant.createChatParams,
+            });
+
+            let error: any;
+
+            try {
+                const { responseMessages: rm, toolMatches: tm } = await assistant.run(
+                    {
+                        tools,
+                        chatId,
+                        // initial messages
+                        messages,
+                        ...this._config.assistant.runParams,
+                    },
+                    { response: { schema: opts.schema } }
+                );
+                toolMatches = tm;
+                responseMessages = rm || [];
+
+                // additional run
+                if (this._config.assistant.additionalRun) {
+                    const { responseMessages: rm2, toolMatches: tm2 } = await assistant.run(
+                        {
+                            tools,
+                            // additional run messages
+                            messages: this._config.assistant.additionalRun,
+                            chatId,
+                            ...this._config.assistant.runParams,
+                        },
+                        { response: { schema: opts.schema } }
+                    );
+                    toolMatches.push(...tm2);
+                    responseMessages.push(...rm2);
+                }
+            } catch (err) {
+                error = err;
+            } finally {
+                // Always delete Chat! A thread lifetime is 60 days
+                await assistant.deleteChat({ chatId });
+            }
+
+            if (error) throw error;
         } else {
-            const { responseMessages: rm } = await provider.chat(
+            const { responseMessages: rm, toolMatches: tm } = await provider.chat(
                 {
-                    messages: inputMessages,
+                    messages,
                 },
-                { response: schema }
+                { response: { schema: opts.schema } }
             );
             responseMessages = rm || [];
+            toolMatches = tm;
         }
 
-        try {
-            return JSON.parse(responseMessages[0].content);
-        } catch (err) {
-            throw new AipiError({
-                message: "Failed to generate data. Did not receive valid JSON.",
-                cause: err,
-            });
+        // -- parse response messages
+
+        let data: any;
+
+        if (opts.parse !== false) {
+            try {
+                if (opts.schema) data = JSON.parse(responseMessages[0].textContent);
+                else data = responseMessages[0].textContent;
+            } catch (err) {
+                throw new AipiError({
+                    message: "Failed to generate data. Did not receive valid JSON.",
+                    cause: err,
+                });
+            }
+        } else {
+            data = responseMessages[0].textContent;
         }
+
+        // -- parse tool data
+
+        const toolData: any = {};
+
+        // Collect tool data
+        toolMatches.forEach((t) => {
+            const toolName = this.parseToolName(t.tool);
+            if (!toolName) return;
+
+            const entry = entries[toolName.index];
+            if (!entry) return;
+
+            const [field] = entry;
+            if (!toolData[field]) toolData[field] = [];
+            toolData[field].push(t.generated);
+        });
+
+        return {
+            data,
+            toolData,
+        };
     }
 
     /**
@@ -95,8 +205,8 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
      * @param schema The schema of the field
      * @param tool Additional tool data. This overwrites the default tool data.
      */
-    add(key: keyof D & string, tool?: Partial<Tool>) {
-        this._fields.set(key, { additionalToolData: tool });
+    add(key: string, tool: Omit<Tool, "name" | "type">) {
+        this._fields.set(key, { tool: tool });
     }
 
     private createToolName(index: number) {
@@ -110,104 +220,31 @@ export class DataGenerator<D extends Record<string, any> = Record<string, unknow
     }
 
     /**
-     * @param target If provided, the data will be added to this object instead of creating a new one
-     * @returns The generated data
-     */
-    async collect(options: GenerateOptions & { target?: Partial<D> } = {}): Promise<Partial<D>> {
-        // return options.target when given for consistency (it is returned when given)
-        if (!this._fields.size) return options.target || {};
-
-        const opts = { ...this._config, ...options };
-
-        const sysMsg = opts.systemMessages || ["You are a data generator."];
-        const userMsg = opts.userMessages || ["Please generate some data."];
-        const trigger = opts.tooTrigger || "Generate data";
-
-        const entries = Array.from(this._fields.entries());
-        if (entries.length > 99) throw new AipiError({ message: "Too many fields. Maximum is 99." });
-
-        const tools: Tool[] = entries.map(([key, { additionalToolData }], index) => {
-            return {
-                type: "function",
-                name: this.createToolName(index),
-                trigger,
-                ...additionalToolData,
-                schema: additionalToolData?.schema || {
-                    type: "object",
-                    description: `The object that holds the generated data`,
-                    additionalProperties: false,
-                    properties: {
-                        data: { type: "string", description: "The generated data" },
-                    },
-                    required: ["content"],
-                },
-            };
-        });
-
-        const provider = this._config.provider || Registry.getProvider();
-
-        if (!provider) throw new ProviderNotFoundError();
-
-        const inputMessages = [
-            ...sysMsg.map((msg) => ({ content: msg, role: "system" as const })),
-            ...userMsg.map((msg) => ({ content: msg, role: "user" as const })),
-        ];
-
-        const result: Partial<D> = options.target || {};
-        let toolMatches: ToolMatch[];
-
-        if (opts.assistant) {
-            const { chatId } = await opts.assistant.createChat({ messages: inputMessages });
-            const { toolMatches: tm } = await opts.assistant.createResponse({ chatId, tools });
-            toolMatches = tm || [];
-        } else {
-            const { toolMatches: tm } = await provider.chat({ messages: inputMessages, tools });
-            toolMatches = tm || [];
-        }
-
-        toolMatches.forEach((toolCall) => {
-            if (toolCall.tool.length < 2) return;
-
-            const parsedToolName = this.parseToolName(toolCall.tool);
-
-            if (!parsedToolName) return;
-            if (parsedToolName.id !== this.id) return;
-
-            const [field] = entries[parsedToolName.index] || [""];
-            if (field === "") return;
-
-            result[field] = toolCall.generated;
-        });
-
-        return result;
-    }
-
-    /**
      * Uses _tools_ to generate data
      */
-    static async generateMap<D extends Record<string, any>>(
+    static async generateMap(
         config: DataGeneratorConfig,
-        schemas: SchemaMap<D>,
+        tools: Record<string, { tool: Omit<Tool, "name" | "type"> }>,
         options?: Omit<GenerateOptions, "toolTrigger">
-    ): Promise<Partial<D>> {
-        const generator = new DataGenerator<D>(config);
+    ): Promise<Generated> {
+        const generator = new DataGenerator(config);
 
-        for (const [key, field] of Object.entries(schemas)) {
-            generator.add(key as keyof D & string, field.tool);
+        for (const [key, field] of Object.entries(tools)) {
+            generator.add(key, field.tool);
         }
 
-        return generator.collect(options);
+        return generator.generate(options);
     }
 
     /**
      * Uses _chat response_ to generate data
      */
-    static async generate<T = unknown>(
-        schema: JSONSchema,
-        config: Omit<DataGeneratorConfig, "id" | "toolName" | "toolTrigger"> = {}
-    ): Promise<T> {
+    static async generate(
+        config: Omit<DataGeneratorConfig, "generate"> = {},
+        generateOptions: GenerateOptions
+    ): Promise<Generated> {
         // Id can be empty as no tools are used
         const generator = new DataGenerator(config);
-        return generator.generate<T>(schema, config);
+        return generator.generate(generateOptions);
     }
 }

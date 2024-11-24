@@ -31,7 +31,7 @@ export function getPropPaths(obj: object, includeObjProps = false): string[] {
  * resolvePropertyPath(obj, "a.b.c"); // 1
  * ```
  */
-export function resolvePropertyPath<T extends object = any>(obj: object, path: string): T {
+export function resolvePropertyPath<T = any>(obj: object, path: string): T {
     return path.split(".").reduce((acc: any, key) => {
         return acc && acc[key] !== undefined ? acc[key] : undefined;
     }, obj);
@@ -46,7 +46,7 @@ export function resolvePropertyPath<T extends object = any>(obj: object, path: s
  * setPropertyByPath(obj, "a.b.c", 2); // { a: { b: { c: 2 } } }
  * ```
  */
-export function setPropertyByPath<T extends object = any>(obj: object, path: string, value: T): void {
+export function setPropertyByPath<T>(obj: object, path: string, value: T): void {
     const keys = path.split(".");
     keys.reduce((acc: any, key: string, index: number) => {
         // If we're at the last key, set the value

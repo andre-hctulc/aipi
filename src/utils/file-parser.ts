@@ -79,6 +79,17 @@ export abstract class FileParser {
         throw new AipiError({ message: "Invalid file source", tags: [AipiErrorTag.TYPE_ERROR] });
     }
 
+    static createJsonFile(
+        source: any,
+        options?: Omit<FilePropertyBag, "type"> & { fileName?: string }
+    ): File {
+        return FileParser.createFile(JSON.stringify(source), { type: "application/json", ...options });
+    }
+
+    static createEmptyFile(options?: FilePropertyBag & { fileName?: string }): File {
+        return FileParser.createFile("", options);
+    }
+
     /**
      * @throws `AipiError` if failed to convert source to buffer
      */
@@ -105,7 +116,7 @@ export abstract class FileParser {
         "application/x-yml",
     ]);
 
-    static isJSON(mimeTypeLike: MimeTypeLike): boolean {
+    static isJson(mimeTypeLike: MimeTypeLike): boolean {
         if (mimeTypeLike instanceof File) mimeTypeLike = mimeTypeLike.type;
         return mimeTypeLike === "application/json";
     }
@@ -119,17 +130,16 @@ export abstract class FileParser {
     }
 
     /**
-     * Checks if the file is UTF-8 encoded and does not follow a strict format.
-     * All files of type `text/*` are considered loose.
+     * Checks if the file is a text file by checking if the mime type starts with `text/`.
      */
-    static isLoose(mimeTypeLike: MimeTypeLike): boolean {
+    static isTextFile(mimeTypeLike: MimeTypeLike): boolean {
         if (mimeTypeLike instanceof File) mimeTypeLike = mimeTypeLike.type;
         return mimeTypeLike.startsWith("text/");
     }
 }
 
 /**
- * Parses the text from plain text files.
+ * Parses text files.
  */
 export class LiteralParser extends FileParser {
     protected override async extractText(file: File): Promise<string> {
@@ -137,6 +147,6 @@ export class LiteralParser extends FileParser {
     }
 
     override parses(file: File): boolean {
-        return ["text/plain", "application/json"].includes(file.type);
+        return FileParser.isTextFile(file);
     }
 }

@@ -1,11 +1,12 @@
 import { Provider } from "../providers";
-import { FileParser, LiteralParser } from "../utils";
+import { FileParser, InputReader, LiteralParser } from "../utils";
 import { VectorStore } from "../vector-stores/vector-store";
 
 enum RegistryKey {
     FILE_PARSERS = "$file_parsers",
     PROVIDERS = "$providers",
     VECTOR_STORES = "$vector_stores",
+    INPUT_READERS = "$input_readers",
 }
 
 export abstract class Registry {
@@ -42,7 +43,10 @@ export abstract class Registry {
 
     static clear() {
         this.instance.clear();
+        return this;
     }
+
+    // -- FileParser (many)
 
     static useFileParser<T extends FileParser>(parser: T) {
         this.instance.register(RegistryKey.FILE_PARSERS, parser);
@@ -53,11 +57,6 @@ export abstract class Registry {
         return this.instance.get<FileParser>(RegistryKey.FILE_PARSERS);
     }
 
-    static useProvider(provider: Provider) {
-        this.instance.register(RegistryKey.PROVIDERS, provider);
-        return this;
-    }
-
     static findFileParser(file: File): FileParser | null {
         return (
             this.getFileParsers()
@@ -66,23 +65,22 @@ export abstract class Registry {
         );
     }
 
+    // -- Provider (1)
+
     static getProvider(): Provider | null {
         const providers = this.instance.get<Provider>(RegistryKey.PROVIDERS);
         return providers.length ? providers[0] : null;
     }
 
-    static findProvider(ProviderClass: new (...args: any) => Provider): Provider | null {
-        return (
-            this.instance.get<Provider>(RegistryKey.PROVIDERS).find((p) => p instanceof ProviderClass) || null
-        );
+    static useProvider(provider: Provider) {
+        this.instance.set(RegistryKey.PROVIDERS, [provider]);
+        return this;
     }
 
-    static getProviders(): Provider[] {
-        return this.instance.get<Provider>(RegistryKey.PROVIDERS);
-    }
+    // -- VectorStore (1)
 
     static useVectorStore(store: VectorStore) {
-        this.instance.register(RegistryKey.VECTOR_STORES, store);
+        this.instance.set(RegistryKey.VECTOR_STORES, [store]);
         return this;
     }
 
@@ -91,7 +89,15 @@ export abstract class Registry {
         return vectorStores.length ? vectorStores[0] : null;
     }
 
-    static getVectorStores(): VectorStore[] {
-        return this.instance.get<VectorStore>(RegistryKey.VECTOR_STORES);
+    // -- InputReader (1)
+
+    static useInputReader(reader: InputReader) {
+        this.instance.set(RegistryKey.INPUT_READERS, [reader]);
+        return this;
+    }
+
+    static getInputReader(): InputReader | null {
+        const readers = this.instance.get<InputReader>(RegistryKey.INPUT_READERS);
+        return readers.length ? readers[0] : null;
     }
 }

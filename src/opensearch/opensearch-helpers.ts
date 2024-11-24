@@ -25,10 +25,6 @@ export class OpenSearchQueryHelpers<T extends Record<string, any> = any> {
         return { match: { [field]: value } };
     }
 
-    create(request: QueryDslQueryContainer): QueryDslQueryContainer {
-        return request;
-    }
-
     /**
      * Omits all falsy values from the list.
      */

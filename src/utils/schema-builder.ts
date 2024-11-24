@@ -59,31 +59,40 @@ export class SchemaBuilder {
         return this;
     }
 
+    private clearSchema(schema: JSONSchema) {
+        Object.keys(schema).forEach((key) => {
+            delete schema[key as keyof JSONSchema];
+        });
+    }
+
     injectRefs(
-        schema: JSONSchema,
         refs:
             | Record<string, JSONSchema>
-            | ((refValue: string, subSchema: JSONSchema, schemaPath: string) => JSONSchema)
+            | ((refValue: string, subSchema: JSONSchema, subSchemaPath: string) => JSONSchema | undefined)
     ): SchemaBuilder {
-        schema = SchemaBuilder.copy(schema);
-
-        const clearSchema = (schema: JSONSchema) => {
-            Object.keys(schema).forEach((key) => {
-                delete schema[key as keyof JSONSchema];
-            });
-        };
-
-        SchemaBuilder.forEachSubSchema(schema, (subSchema, path) => {
+        return this.mutate((subSchema, subSchemaPath) => {
             if (subSchema.$ref) {
-                // Clear the schema
-                clearSchema(subSchema);
-
                 // Copy the ref schema to the current schema
                 if (typeof refs === "function") {
-                    Object.assign(subSchema, refs(subSchema.$ref, subSchema, path));
+                    return Object.assign(subSchema, refs(subSchema.$ref, subSchema, subSchemaPath));
                 } else if (subSchema.$ref in refs) {
-                    Object.assign(subSchema, refs[subSchema.$ref]);
+                    return Object.assign(subSchema, refs[subSchema.$ref]);
                 }
+            }
+            return undefined;
+        });
+    }
+
+    mutate(
+        mutator: (subSchema: JSONSchema, subSchemaPath: string) => JSONSchema | undefined | void
+    ): SchemaBuilder {
+        SchemaBuilder.forEachSubSchema(this._schema, (subSchema, path) => {
+            const newSchema = mutator(subSchema, path);
+            // Clear the schema if the mutator returns a new schema
+            if (newSchema) {
+                this.clearSchema(subSchema);
+                // Copy the ref schema to the current schema
+                Object.assign(subSchema, newSchema);
             }
         });
 
@@ -108,13 +117,20 @@ export class SchemaBuilder {
             | Record<string, JSONSchema>
             | ((refValue: string, subSchema: JSONSchema, path: string) => JSONSchema)
     ): JSONSchema {
-        return SchemaBuilder.from(schema).injectRefs(schema, refs).build();
+        return SchemaBuilder.from(schema).injectRefs(refs).build();
+    }
+
+    static mutate(
+        schema: JSONSchema,
+        mutator: (subSchema: JSONSchema, subSchemaPath: string) => JSONSchema | undefined | void
+    ): JSONSchema {
+        return SchemaBuilder.from(schema).mutate(mutator).build();
     }
 
     /**
      * Iterate _bottom-up_ over all sub-schemas in the provided schema.
      *
-     * **Examples schema path:**
+     * **Examples schema paths:**
      * _prop_, _user/properties/name_, _user/properties/address/properties/street, _app/items_, _app/items/0_
      */
     static forEachSubSchema(

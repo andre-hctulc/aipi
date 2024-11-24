@@ -65,6 +65,7 @@ export interface CreateAssistantInput extends Input {
     metadata?: any;
     tools?: Tool[];
     resources?: any;
+    model?: string;
 }
 
 export interface CreateAssistantResult<A extends Assistant = Assistant> extends Result {
@@ -76,7 +77,7 @@ export interface GetAssistantInput extends Result {
 }
 
 export interface GetAssistantResult<A extends Assistant = Assistant> extends Result {
-    assistant: A;
+    assistant: A | null;
 }
 
 export interface UpdateAssistantInput extends Input {
@@ -91,11 +92,12 @@ export interface UpdateAssistantInput extends Input {
         tools?: Tool[];
         name?: string;
         resources?: any;
+        model?: string;
     };
 }
 
-export interface UpdateAssistantResult extends Result {
-    updated: boolean;
+export interface UpdateAssistantResult<A extends Assistant = Assistant> extends Result {
+    assistant: A;
 }
 
 export interface DeleteAssistantInput extends Input {
@@ -142,7 +144,7 @@ export abstract class Provider<A extends Assistant = Assistant> {
     abstract updateAssistant(
         input: UpdateAssistantInput,
         meta: MetaDescription
-    ): Promise<UpdateAssistantResult>;
+    ): Promise<UpdateAssistantResult<A>>;
 
     /**
      * @returns deleted?

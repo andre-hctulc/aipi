@@ -9,11 +9,12 @@ export interface MetaDescription {
     /**
      * Response options
      */
-    response?: any;
+    response?: { schema?: JSONSchema; jsonMode?: boolean; configure?: any; format?: any };
     /**
      * Request options
      */
     request?: any;
+    pollInterval?: number;
 }
 
 export interface HandlerParams<I> extends MetaDescription {
@@ -27,11 +28,11 @@ export type Instruction = {
     content: string;
 };
 
-export type MessageType = "user" | "system" | (string & {});
+export type MessageType = "user" | "system" | "assistant" | (string & {});
 
 export type Message = {
     role: MessageType;
-    content: string;
+    textContent: string;
     attachments?: any;
     info?: any;
     toolMatches?: ToolMatch[];

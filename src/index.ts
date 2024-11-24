@@ -10,3 +10,4 @@ export * from "./vector-stores";
 export * from "./registry";
 export * from "./openai";
 export * from "./opensearch";
+export * from "./files";

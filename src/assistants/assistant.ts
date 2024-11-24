@@ -31,22 +31,36 @@ export interface AddMessagesResult extends Result {
 export interface CreateResponseInput extends Input {
     chatId: string;
     /**
-     * Additional Instructions added for the creation
+     * Overrides base instructions
      * */
     instructions?: string;
+    /**
+     * Additional Instructions added for the creation
+     * */
+    additionalInstructions?: string;
     /**
      * Additional Messages added before creating the response
      * */
     messages?: Message[];
     /**
-     * Tools to use for this creation. This may override the tools set in the assistant.
+     * Tools to use for this creation. This **may override** the base tools.
      */
     tools?: Tool[];
 }
 
 export interface CreateResponseResult extends Result {
-    toolMatches?: ToolMatch[];
+    toolMatches: ToolMatch[];
     responseMessages: Message[];
+}
+
+export interface CreateRunMessageInput extends Input {
+    chatId: string;
+    runId: string;
+    message: Message;
+}
+
+export interface CreateRunMessageResult extends Result {
+    messageId: string;
 }
 
 export interface GetMessageInput extends Message {
@@ -90,11 +104,20 @@ export interface GetChatInput extends Input {
 
 export interface GetChatResult extends Result {}
 
+export interface UpdateChatInput extends Input {
+    chatId: string;
+    data: any;
+}
+
+export interface UpdateChatResult extends Result {
+    updated: boolean;
+}
+
 /**
  * Assistants can be used to create and manage chats.
  */
 export abstract class Assistant {
-    constructor(readonly id: string) {}
+    constructor(readonly id: string, readonly metadata: Record<string, any> = {}) {}
 
     // -- Chats
 
@@ -102,14 +125,12 @@ export abstract class Assistant {
     abstract deleteChat(input: DeleteChatInput, meta?: MetaDescription): Promise<DeleteChatResult>;
     abstract listChats(input: ListChatsInput, meta?: MetaDescription): Promise<ListChatsResult>;
     abstract getChat(input: { chatId: string }, meta?: MetaDescription): Promise<any>;
+    abstract updateChat(input: UpdateChatInput, meta?: MetaDescription): Promise<UpdateChatResult>;
 
     // -- Messages
 
     abstract addMessages(input: AddMessagesInput, meta?: MetaDescription): Promise<AddMessagesResult>;
-    abstract createResponse(
-        input: CreateResponseInput,
-        meta?: MetaDescription
-    ): Promise<CreateResponseResult>;
+    abstract run(input: CreateResponseInput, meta?: MetaDescription): Promise<CreateResponseResult>;
     abstract getMessage(input: GetMessageInput, meta?: MetaDescription): Promise<GetMessageResult>;
     abstract listMessages(input: ListMessagesInput, meta?: MetaDescription): Promise<ListMessagesResult>;
     abstract deleteMessage(input: DeleteMessageInput, meta?: MetaDescription): Promise<DeleteMessageResult>;

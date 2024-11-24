@@ -1,5 +1,14 @@
+import { join, resolve } from "path";
+import type { FileStorage } from "../files";
+import fs from "fs";
+import { AipiError } from "../aipi-error";
+
 export type InputObject = {
     input: string | string[];
+    /**
+     * @default " "
+     */
+    separator?: string;
 };
 
 export type Variables = Record<string, any>;
@@ -70,18 +79,23 @@ export abstract class InputBuilder {
         });
     }
 
-    private static parseInputPart(input: InputPart): string {
+    static parse(input: InputPart): string {
         if (!input) return "";
         if (typeof input === "string") return input;
-        if (Array.isArray(input)) return input.map((i) => this.parseInputPart(i)).join("");
-        if (typeof input === "object") return this.parseInputPart(input?.input || "");
-        if (input) return this.parseInputPart(input);
+        if (Array.isArray(input)) return input.map((i) => this.parse(i)).join("");
+        if (typeof input === "object")
+            return this.parse(
+                input.separator && Array.isArray(input.input)
+                    ? input.input.join(input.separator)
+                    : input?.input || ""
+            );
+        if (input) return this.parse(input);
         return "";
     }
 
     /**
      * **Text**
-     * 
+     *
      * Joins the input parts with a space separator
      */
     static t(...input: InputPart[]): string {
@@ -98,7 +112,7 @@ export abstract class InputBuilder {
     }
 
     static join(separator: string, ...input: InputPart[]) {
-        return input.map((inp) => this.parseInputPart(inp)).join(separator);
+        return input.map((inp) => this.parse(inp)).join(separator);
     }
 
     /**
@@ -119,5 +133,68 @@ export abstract class InputBuilder {
 
     static hug(text: string, hugger: string) {
         return `${hugger}${text}${hugger}`;
+    }
+}
+
+export interface InputReaderConfig {
+    /**
+     * Path to a directory
+     */
+    files?: string;
+    fileStorage?: FileStorage;
+}
+
+// TODO implement cache (See docs/TODO)
+export class InputReader {
+    private _filesDir: string;
+    private _fileStorage: FileStorage | null = null;
+
+    constructor(config: InputReaderConfig) {
+        if (config.fileStorage) this._fileStorage = config.fileStorage;
+        this._filesDir = resolve(config.files || "");
+    }
+
+    /**
+     * @param key The key of the file to read. A file path or key in the storage
+     */
+    async read(key: string): Promise<string> {
+        if (this._fileStorage) {
+            const file = await this._fileStorage.getFile(key);
+            return InputReader.parseFile(file);
+        } else {
+            const fullPath = join(this._filesDir, key);
+            return InputReader.readFile(fullPath);
+        }
+    }
+
+    private static parseContent(content: string, isJSON: boolean) {
+        if (isJSON) {
+            let inputObj: InputObject;
+
+            try {
+                inputObj = JSON.parse(content);
+                if (!inputObj.input) throw new Error();
+            } catch (err) {
+                throw new AipiError({
+                    message: "Failed to parse JSON file. Expected { input: string | string[], ... }",
+                });
+            }
+            return InputBuilder.parse(inputObj);
+        }
+
+        return content;
+    }
+
+    static async parseFile(file: File) {
+        const isJSON = file.type === "application/json";
+        const content = await file.text();
+        return this.parseContent(content, isJSON);
+    }
+
+    static async readFile(path: string) {
+        const absPath = resolve(path);
+        const isJSON = path.endsWith(".json");
+        const content = await fs.promises.readFile(absPath, "utf-8");
+        return this.parseContent(content, isJSON);
     }
 }
