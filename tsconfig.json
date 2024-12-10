@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
-        "target": "ES2020",
-        "module": "commonjs",
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "lib": ["es2020", "dom"],
         "declaration": true,
         "strict": true,
@@ -19,7 +20,10 @@
         "strictPropertyInitialization": false,
         "typeRoots": ["./node_modules/@types"],
         "allowSyntheticDefaultImports": true,
-        "noImplicitOverride": true
+        "noImplicitOverride": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true
     },
     "exclude": ["node_modules", "cdk.out"]
 }

@@ -1,15 +1,16 @@
-import { Assistant } from "../assistants/assistant";
-import { CommonQueryOptions } from "../types";
+import { Assistant } from "../assistants/assistant.js";
+import { Resource } from "../app/resource.js";
+import type { CommonQueryOptions, JSONSchema } from "../types/index.js";
 import type {
     Embeddable,
     Input,
     Message,
-    MetaDescription,
+    MessageFormat,
     Result,
     Tool,
     ToolMatch,
     Vector,
-} from "../types/types";
+} from "../types/types.js";
 
 export interface EmbedInput extends Input {
     /**
@@ -25,6 +26,7 @@ export interface EmbedResult extends Result {
 export interface ChatInput extends Input {
     messages: Message[];
     tools?: Tool[];
+    responseFormat?: MessageFormat;
 }
 
 export interface ChatResult extends Result {
@@ -96,6 +98,15 @@ export interface UpdateAssistantInput extends Input {
     };
 }
 
+export interface CompleteResult extends Result {
+    choices: { content: string; type: (string & {}) | "text" }[];
+}
+
+export interface CompleteInput extends Input {
+    messages?: Message[];
+    prompt: string;
+}
+
 export interface UpdateAssistantResult<A extends Assistant = Assistant> extends Result {
     assistant: A;
 }
@@ -108,49 +119,35 @@ export interface DeleteAssistantResult extends Result {
     deleted: boolean;
 }
 
-export abstract class Provider<A extends Assistant = Assistant> {
-    constructor() {}
+export abstract class Provider<A extends Assistant = Assistant> extends Resource {
+    constructor() {
+        super();
+    }
 
     // -- Embeddings
 
-    abstract embed(input: EmbedInput, meta?: MetaDescription): Promise<EmbedResult>;
-
-    // -- Files
-
-    abstract createFile(input: CreateFileInput, meta?: MetaDescription): Promise<CreateFileResult>;
-    abstract deleteFile(input: DeleteFileInput, meta?: MetaDescription): Promise<DeleteFileResult>;
+    abstract embed(input: EmbedInput, options?: any): Promise<EmbedResult>;
 
     // -- Chat
 
-    abstract chat(input: ChatInput, meta?: MetaDescription): Promise<ChatResult>;
+    abstract chat(input: ChatInput, options?: any): Promise<ChatResult>;
+    abstract complete(input: CompleteInput, options?: any): Promise<CompleteResult>;
 
     // -- Assistants
 
-    abstract listAssistants(
-        input: ListAssistantsInput,
-        meta: MetaDescription
-    ): Promise<ListAssistantsResult<A>>;
+    abstract listAssistants(input: ListAssistantsInput, options?: any): Promise<ListAssistantsResult<A>>;
 
-    abstract createAssistant(
-        input: CreateAssistantInput,
-        meta: MetaDescription
-    ): Promise<CreateAssistantResult<A>>;
+    abstract createAssistant(input: CreateAssistantInput, options?: any): Promise<CreateAssistantResult<A>>;
 
-    abstract getAssistant(input: GetAssistantInput, meta: MetaDescription): Promise<GetAssistantResult<A>>;
+    abstract getAssistant(input: GetAssistantInput, options?: any): Promise<GetAssistantResult<A>>;
 
     /**
      * @returns updated?
      */
-    abstract updateAssistant(
-        input: UpdateAssistantInput,
-        meta: MetaDescription
-    ): Promise<UpdateAssistantResult<A>>;
+    abstract updateAssistant(input: UpdateAssistantInput, options?: any): Promise<UpdateAssistantResult<A>>;
 
     /**
      * @returns deleted?
      */
-    abstract deleteAssistant(
-        input: DeleteAssistantInput,
-        meta: MetaDescription
-    ): Promise<DeleteAssistantResult>;
+    abstract deleteAssistant(input: DeleteAssistantInput, options?: any): Promise<DeleteAssistantResult>;
 }

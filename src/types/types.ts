@@ -1,26 +1,6 @@
-import type { JSONSchema } from "./json-schema";
+import type { JSONSchema } from "./json-schema.js";
 
 export type Vector = number[];
-
-export interface MetaDescription {
-    model?: string;
-    user?: string;
-    info?: any;
-    /**
-     * Response options
-     */
-    response?: { schema?: JSONSchema; jsonMode?: boolean; configure?: any; format?: any };
-    /**
-     * Request options
-     */
-    request?: any;
-    pollInterval?: number;
-}
-
-export interface HandlerParams<I> extends MetaDescription {
-    provider: string;
-    input: I;
-}
 
 export type Embeddable = string;
 
@@ -51,7 +31,7 @@ export interface Result {
 export interface Tool {
     type: ({} & string) | "function";
     name: string;
-    trigger?: string;
+    description?: string;
     configure?: any;
     /** JSON schema */
     schema?: JSONSchema;
@@ -75,6 +55,11 @@ export interface ToolMatch {
      */
     parseError?: unknown;
 }
+
+export type MessageFormat = {
+    type?: "text" | "json" | (string & {});
+    schema?: JSONSchema;
+};
 
 export type Falsy = false | null | undefined;
 

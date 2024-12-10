@@ -1,3 +1,3 @@
-export * from "./types";
-export * from "./json-schema";
-export * from "./query-options";
+export * from "./types.js";
+export type { JSONSchema } from "./json-schema.js";
+export * from "./query-options.js";

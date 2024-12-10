@@ -1,0 +1,3 @@
+[submodule "aipi"]
+	path = aipi
+	url = https://github.com/andre-hctulc/aipi.git

@@ -1,9 +1,11 @@
-import type { Vector, CommonQueryOptions } from "../types";
+import { Resource } from "../app/resource.js";
+import type { CommonQueryOptions } from "../types/query-options.js";
+import type { Vector } from "../types/types.js";
 
 /**
  * @template S Search object
  */
-export abstract class VectorStore<S extends object = any> {
+export abstract class VectorStore<S extends object = any> extends Resource {
     abstract getVector(id: string): Promise<Vector | null>;
     abstract setVector(id: string, vector: Vector, additionalField?: any): Promise<void>;
     abstract deleteVector(id: string): Promise<void>;

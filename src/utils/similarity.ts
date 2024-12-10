@@ -1,4 +1,4 @@
-import type { Vector } from "../types";
+import type { Vector } from "../types/types.js";
 import { dot, norm, multiply, divide } from "mathjs";
 
 /**
