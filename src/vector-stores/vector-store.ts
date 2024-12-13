@@ -1,6 +1,6 @@
 import { Resource } from "../app/resource.js";
+import type { Vector } from "../embeddings/types.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
-import type { Vector } from "../types/types.js";
 
 /**
  * @template S Search object

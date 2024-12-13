@@ -1,14 +1,14 @@
-export enum AipiErrorTag {
+export enum ErrorTag {
     NOT_FOUND = "not-found",
     TYPE_ERROR = "type-error",
     NOT_SUPPORTED = "not-supported",
 }
 
-type AipiErrorInfo = {
+type ErrorInfo = {
     message: string;
     cause: unknown;
     data: any;
-    tags: AipiErrorTag[];
+    tags: ErrorTag[];
     unexpected: boolean;
     httpStatus: number;
     /**
@@ -22,9 +22,9 @@ type AipiErrorInfo = {
 };
 
 export class AipiError extends Error {
-    readonly info: AipiErrorInfo;
+    readonly info: ErrorInfo;
 
-    constructor(info: Partial<AipiErrorInfo>) {
+    constructor(info: Partial<ErrorInfo>) {
         super(
             "AIPI Error" +
                 (info.unexpected ? " (unexpected)" : "") +
@@ -46,24 +46,15 @@ export class AipiError extends Error {
         return this.info.cause instanceof AipiError;
     }
 
-    addTag(tag: AipiErrorTag) {
+    addTag(tag: ErrorTag) {
         this.info.tags.push(tag);
     }
 
-    removeTag(tag: AipiErrorTag) {
+    removeTag(tag: ErrorTag) {
         this.info.tags = this.info.tags.filter((t) => t !== tag);
     }
 
-    hasTag(tag: AipiErrorTag) {
+    hasTag(tag: ErrorTag) {
         return this.info.tags.includes(tag);
-    }
-}
-
-export class ProviderNotFoundError extends AipiError {
-    constructor(provider?: string) {
-        super({
-            message: "no provider found" + (provider ? ` for provider ${provider}` : ""),
-            tags: [AipiErrorTag.NOT_FOUND],
-        });
     }
 }

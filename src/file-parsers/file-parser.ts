@@ -1,4 +1,4 @@
-import { AipiError, AipiErrorTag } from "../errors/aipi-error.js";
+import { AipiError, ErrorTag } from "../errors/aipi-error.js";
 import { Resource } from "../app/resource.js";
 import type { WithScopes } from "../app/index.js";
 
@@ -64,7 +64,7 @@ export abstract class FileParser extends Resource implements WithScopes<File> {
         if (source instanceof ArrayBuffer) return new Blob([new Uint8Array(source)], options);
         if (typeof source === "string") return new Blob([source], options);
         if (Array.isArray(source)) return new Blob(source, options);
-        throw new AipiError({ message: "Invalid blob source", tags: [AipiErrorTag.TYPE_ERROR] });
+        throw new AipiError({ message: "Invalid blob source", tags: [ErrorTag.TYPE_ERROR] });
     }
 
     /**
@@ -90,7 +90,7 @@ export abstract class FileParser extends Resource implements WithScopes<File> {
             return new File(source, options?.name || "file", options);
         }
 
-        throw new AipiError({ message: "Invalid file source", tags: [AipiErrorTag.TYPE_ERROR] });
+        throw new AipiError({ message: "Invalid file source", tags: [ErrorTag.TYPE_ERROR] });
     }
 
     static createJsonFile(

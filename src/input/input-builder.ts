@@ -1,5 +1,3 @@
-import type { FileStorage } from "../files/file-storage.js";
-
 export type InputObject = {
     input: string | string[];
     /**
@@ -11,7 +9,7 @@ export type InputObject = {
 export type Variables = Record<string, any>;
 
 /**
- * Parse this with  {@link InputBuilder.parse}
+ * Parse this with  {@link InputBuilder.parsePart}
  */
 export type InputPart = string | undefined | null | false | InputObject | InputPart[];
 
@@ -23,17 +21,17 @@ export abstract class InputBuilder {
         this.add(input);
     }
 
-    static parse(input: InputPart): string {
+    static parsePart(input: InputPart): string {
         if (!input) return "";
         if (typeof input === "string") return input;
-        if (Array.isArray(input)) return input.map((i) => this.parse(i)).join("");
+        if (Array.isArray(input)) return input.map((i) => this.parsePart(i)).join("");
         if (typeof input === "object")
-            return this.parse(
+            return this.parsePart(
                 input.separator && Array.isArray(input.input)
                     ? input.input.join(input.separator ?? "")
                     : input?.input || ""
             );
-        if (input) return this.parse(input);
+        if (input) return this.parsePart(input);
         return "";
     }
 
@@ -59,6 +57,14 @@ export abstract class InputBuilder {
         return `${hugWith}${text}${hugWith}`;
     }
 
+    static sep(separator: string, ...input: string[]) {
+        return input.join(separator);
+    }
+
+    static join(...input: string[]) {
+        return input.join("");
+    }
+
     add(input: string | string[]) {
         if (Array.isArray(input)) {
             this._text += input.join("");
@@ -73,8 +79,19 @@ export abstract class InputBuilder {
         return this;
     }
 
+    /**
+     * Adds a line to the input
+     */
     addLine(line: string) {
         this._text += "\n" + line;
+        return this;
+    }
+
+    /**
+     * Adds a paragraph to the input
+     */
+    addP(paragraph: string) {
+        this._text += "\n\n" + paragraph;
         return this;
     }
 
@@ -102,43 +119,5 @@ export abstract class InputBuilder {
     build() {
         if (Object.keys(this._vars).length > 0) return InputBuilder.injectVars(this._text, this._vars);
         return this._text;
-    }
-
-    /**
-     * **Text**
-     *
-     * Joins the input parts with a space separator
-     */
-    t(...input: string[]): string {
-        return this.join(" ", ...input);
-    }
-
-    /**
-     * **Concat**
-     *
-     * Joins the input parts with no separator
-     */
-    c(...input: string[]): string {
-        return this.join("", ...input);
-    }
-
-    join(separator: string, ...input: string[]) {
-        return input.join(separator);
-    }
-
-    /**
-     * **Paragraphs**
-     *
-     * Joins the input parts with a newline separator
-     */
-    p(...input: string[]) {
-        return this.join("\n", ...input);
-    }
-
-    /**
-     * Joins the input parts with two newline separators
-     */
-    pp(...input: string[]) {
-        return this.join("\n\n", ...input);
     }
 }

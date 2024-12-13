@@ -1,4 +1,4 @@
-import { FileStorage } from "../files/file-storage.js";
+import { FileStorage } from "../persister/file-storage.js";
 import { Resource } from "../app/resource.js";
 import { AipiError } from "../errors/aipi-error.js";
 
@@ -30,7 +30,7 @@ export abstract class InputReader extends Resource {
     /**
      * @param key The key of the file to read. A file path or key in the storage
      */
-    async read(key: string): Promise<string> {
+    async read(key: string): Promise<string | null> {
         const fileStorage = this.fileStorage || this.app.get(FileStorage);
 
         if (!fileStorage) {
@@ -39,6 +39,6 @@ export abstract class InputReader extends Resource {
 
         const file = await fileStorage.load(key);
 
-        return file.text();
+        return file?.text() ?? null;
     }
 }

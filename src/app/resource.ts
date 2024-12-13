@@ -3,9 +3,19 @@ import { AipiApp } from "./index.js";
 import type { BootstrapOptions } from "./registry.js";
 
 export abstract class Resource {
-    private mounted = false;
+    private _mounted = false;
 
     private _app: AipiApp | undefined;
+
+    readonly id: string;
+
+    constructor() {
+        this.id = Math.random().toString(36).substring(7);
+    }
+
+    get mounted() {
+        return this._mounted;
+    }
 
     /**
      * Available after mount or when provided via {@link Resource.feedApp}.
@@ -27,11 +37,11 @@ export abstract class Resource {
     }
 
     async mount(app: AipiApp, bootstrapOptions: BootstrapOptions) {
-        if (this.mounted) {
+        if (this._mounted) {
             throw new AipiError({ message: "Resource already mounted" });
         }
 
-        this.mounted = true;
+        this._mounted = true;
         this._app = app;
 
         await this.onMount?.(bootstrapOptions);

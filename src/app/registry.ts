@@ -97,11 +97,15 @@ export abstract class AipiRegistry {
 
     useIf<T>(
         condition: T,
-        resource: (truthyCondition: Truthy<T>) => Resource,
+        resource: (truthyCondition: Truthy<T>) => Resource | Resource[],
         priority: number = DEFAULT_PRIORITY
     ): this {
         if (condition) {
-            this.use(resource(condition as Truthy<T>), priority);
+            let resources = resource(condition as Truthy<T>);
+            if (!Array.isArray(resources)) resources = [resources];
+            for (const resource of resources) {
+                this.use(resource, priority);
+            }
         }
 
         return this;

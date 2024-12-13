@@ -1,3 +1,8 @@
+import type { RequestOptions, Uploadable } from "openai/core.mjs";
+import { Resource } from "../../app/index.js";
+import { OpenAIProvider } from "./openai-provider.js";
+import type { FilePurpose } from "openai/resources/files.mjs";
+
 const supportedByFileSearch = new Set([
     "text/x-c",
     "text/x-c++",
@@ -22,7 +27,13 @@ const supportedByFileSearch = new Set([
     "text/plain",
 ]);
 
-export abstract class OpenAIFiles {
+export abstract class OpenAIFiles extends Resource {
+    private provider!: OpenAIProvider;
+
+    override onMount() {
+        this.provider = this.app.require(OpenAIProvider);
+    }
+
     /**
      * Checks whether the given MIME type is supported by OpenAI file search.
      *
@@ -30,5 +41,26 @@ export abstract class OpenAIFiles {
      */
     static fileSearchSupports(mimeType: string) {
         return supportedByFileSearch.has(mimeType);
+    }
+    // -- Files
+
+    async createFile(
+        file: Uploadable,
+        purpose: FilePurpose,
+        requestOptions?: RequestOptions
+    ): Promise<{ fileId: string }> {
+        const res = await this.provider.client.files.create(
+            {
+                purpose,
+                file,
+            },
+            requestOptions
+        );
+
+        return { fileId: res.id };
+    }
+
+    async deleteFile(fileId: string, requestOptions?: RequestOptions): Promise<void> {
+        await this.provider.client.files.del(fileId, requestOptions);
     }
 }

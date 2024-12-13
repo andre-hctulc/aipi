@@ -62,3 +62,35 @@ export function setPropertyByPath<T>(obj: object, path: string, value: T): void 
         return acc[key];
     }, obj);
 }
+
+export function createId(length = 8): string {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let id = "";
+    for (let i = 0; i < length; i++) {
+        id += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return id;
+}
+
+/**
+ *
+ * @param o1
+ * @param o2 Overwrites o1
+ */
+export function mergeObjects(o1: any, o2: any) {
+    const res = { ...o1 };
+
+    if (!o2) return res;
+
+    for (const key in o2) {
+        const v2: any = o2[key];
+
+        if (v2 && typeof v2 === "object" && !Array.isArray(v2)) {
+            res[key] = mergeObjects(o1[key], o2[key]);
+        } else if (v2 !== undefined) {
+            res[key] = v2;
+        }
+    }
+
+    return res;
+}

@@ -6,13 +6,7 @@ import fastify, {
     type FastifyServerOptions,
 } from "fastify";
 import { AipiServer, type AipiServerOptions } from "../../server/server.js";
-import type {
-    EndpointParams,
-    ParamDef,
-    RawEndpointParams,
-    RefinedEndpoint,
-    RequestContext,
-} from "../../server/endpoints.js";
+import type { RawEndpointParams, RefinedEndpoint, RequestContext } from "../../server/endpoints.js";
 
 export class FastifyAipiServer extends AipiServer<FastifyInstance, FastifyRequest, FastifyReply> {
     constructor(options?: AipiServerOptions, fastifyOptions?: FastifyServerOptions) {

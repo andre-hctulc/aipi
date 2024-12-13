@@ -1,25 +1,46 @@
 import type { JSONSchema, JSONSchemaDefinition } from "../types/json-schema.js";
-import { SchemaBuilder } from "./schema-builder.js";
+import type { JSONSchemaValidator } from "./json-schema-validator.js";
+import { SchemaBuilder, type SchemaBuilderOptions } from "./schema-builder.js";
+
+export interface JSONSchemaBuilderOptions extends SchemaBuilderOptions {
+    /**
+     * Schema validator to use for validating the schema.
+     *
+     * Defaults to simple is object check.
+     */
+    validator?: JSONSchemaValidator;
+}
 
 /**
  * JSON Schema Builder. Extend
  */
 export class JSONSchemaBuilder extends SchemaBuilder<JSONSchema> {
-    constructor() {
-        super({});
-    }
-
-    static from(schema: JSONSchema): JSONSchemaBuilder {
-        return new JSONSchemaBuilder().schema(schema);
+    constructor(
+        schema?: JSONSchema,
+        protected options?: JSONSchemaBuilderOptions
+    ) {
+        super(schema || {}, options);
     }
 
     protected validate(schema: JSONSchema): { errors: string[] } {
-        // TODO
+        if (this.options?.validator) {
+            return this.options.validator.validate(schema, schema);
+        }
+
+        // default validate
+        if (!schema || typeof schema !== "object") {
+            return { errors: ["Invalid schema"] };
+        }
+
         return { errors: [] };
     }
 
     /**
      * Sets a sub schema at the provided path
+     * 
+     * 
+     * **Example paths:** 
+     * _prop_, _user.id_, _user.name_, _user.address.street_
      */
     sub(path: string, schema: JSONSchema): this {
         const parts = path.split(".");
@@ -48,8 +69,7 @@ export class JSONSchemaBuilder extends SchemaBuilder<JSONSchema> {
      * @param objPaths The paths to pick
      */
     pick(objPaths: string[]): this {
-        const builder = JSONSchemaBuilder.from(this._schema);
-        this._schema = {};
+        const builder = new JSONSchemaBuilder(this._schema);
         objPaths.forEach((path) => {
             this.sub(path, JSONSchemaBuilder.resolveObjPath(this._schema, path)!);
         });
@@ -81,15 +101,19 @@ export class JSONSchemaBuilder extends SchemaBuilder<JSONSchema> {
         });
     }
 
+    /**
+     * Transform the schema by recursive sub schema transformation
+     */
     transform(
         transformer: (subSchema: JSONSchema, subSchemaPath: string) => JSONSchema | undefined | void
     ): this {
         JSONSchemaBuilder.forEachSubSchema(this._schema, (subSchema, path) => {
-            const newSchema = transformer(subSchema, path);
-            // Clear the schema if the mutator returns a new schema
+            // spread in case of mutation of the subSchema itself, so we do not clear it with clearSchema
+            const newSchema = transformer({ ...subSchema }, path);
+
             if (newSchema) {
+                // Clear the current sub schema and assign the new schema
                 this.clearSchema(subSchema);
-                // Copy the ref schema to the current schema
                 Object.assign(subSchema, newSchema);
             }
         });
@@ -161,9 +185,14 @@ export class JSONSchemaBuilder extends SchemaBuilder<JSONSchema> {
         return schema === true || schema.type === "object" || schema.type === "array" || !schema.type;
     }
 
+
     /**
-     * **Example paths:** _prop_, _user.id_, _user.name_, _user.address.street_
-     * @returns The sub-schema at the provided path
+     * Iterate _bottom-up_ over all sub-schemas in the provided schema.
+     *
+     * **Examples schema paths:**
+     * _prop_, _user/properties/name_, _user/properties/address/properties/street, _app/items_, _app/items/0_
+     * 
+     * @returns The sub schema at the provided path
      */
     static resolveObjPath(schema: JSONSchema, path: string): JSONSchema | null {
         const parts = path.split(".");

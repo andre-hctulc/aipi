@@ -1,16 +1,14 @@
 import { AipiError } from "../errors/aipi-error.js";
-import { Assistant, type CreateResponseInput, type CreateChatInput } from "../assistants/assistant.js";
-import type { JSONSchema } from "../index.js";
-import { Provider } from "../providers/provider.js";
-import type { Message, Tool, ToolMatch } from "../types/types.js";
+import type { AnyOptions, Chat } from "../index.js";
+import type { Message, Format, Tool } from "../chats/types.js";
 
 export interface GenerateOptions {
     /**
      * Messages used to configure the chat that generates the data. Should contain at least one user message.
      */
     messages?: Message[];
-    schema?: JSONSchema;
-    chatOptions?: any;
+    responseFormat?: Format;
+    runOptions?: AnyOptions;
     tools?: Tool[];
     /**
      * Parse the response as JSON if a schema is provided.
@@ -20,7 +18,6 @@ export interface GenerateOptions {
 }
 
 export interface DataGeneratorConfig {
-    provider: Provider;
     /**
      * Base generate options. Can be overwritten on a per generate basis.
      */
@@ -29,26 +26,8 @@ export interface DataGeneratorConfig {
      * Used to identify tools and other data. Defaults to current time.
      */
     id?: string;
-    /**
-     * Use an assistant chat instead of normal chat for generating data
-     */
-    assistant?: {
-        assistant: Assistant;
-        /**
-         * Additional parameters for creating the response
-         */
-        runParams?: Partial<CreateResponseInput>;
-        /**
-         * Additional parameters for creating the chat
-         */
-        createChatParams?: Partial<CreateChatInput>;
-        /**
-         * Messages for an additional run.
-         * This can be used to generate a messages in the first run and make tools trigger in the second run.
-         */
-        additionalRun?: Message[];
-    };
     baseTools?: Tool[];
+    chat: Chat;
 }
 
 export interface Generated {
@@ -57,7 +36,7 @@ export interface Generated {
 }
 
 /**
- * Uses _tools_ to generate data
+ * Uses {@link Chat}s to generate data.
  */
 export class DataGenerator {
     private _config: DataGeneratorConfig;
@@ -74,17 +53,16 @@ export class DataGenerator {
     }
 
     async generate(options?: Omit<GenerateOptions, "toolTrigger">): Promise<Generated> {
-        const opts = { ...this._config.generateOptions, ...options };
-        const messages: Message[] = opts.messages || [
+        const genOpts = { ...this._config.generateOptions, ...options };
+        const messages: Message[] = genOpts.messages || [
             { role: "system", textContent: "You are a data generator." },
             { role: "user", textContent: "Please generate some data." },
         ];
-        const provider = this._config.provider;
 
         const entries = Array.from(this._fields.entries());
         if (entries.length >= 100) throw new AipiError({ message: "Too many fields. Maximum is 99." });
 
-        const tools: Tool[] = [...(this._config.baseTools || []), ...(opts.tools || [])];
+        const tools: Tool[] = [...(this._config.baseTools || []), ...(genOpts.tools || [])];
 
         entries.forEach(([key, field], index) => {
             const toolName = this.createToolName(index);
@@ -95,79 +73,20 @@ export class DataGenerator {
             });
         });
 
-        // -- create chat and response
+        // -- add messages to chat and run it
 
-        let responseMessages: Message[] = [];
-        let toolMatches: ToolMatch[] = [];
+        const chat = this._config.chat;
 
-        if (this._config.assistant) {
-            const assistant = this._config.assistant.assistant;
-
-            const { chatId } = await assistant.createChat({
-                ...this._config.assistant.createChatParams,
-            });
-
-            let error: any;
-
-            try {
-                const { responseMessages: rm, toolMatches: tm } = await assistant.run(
-                    {
-                        tools,
-                        chatId,
-                        // initial messages
-                        messages,
-                        responseFormat: opts.schema ? { schema: opts.schema } : undefined,
-                        ...this._config.assistant.runParams,
-                    },
-                    opts.chatOptions
-                );
-                toolMatches = tm;
-                responseMessages = rm || [];
-
-                // additional run
-                if (this._config.assistant.additionalRun) {
-                    const { responseMessages: rm2, toolMatches: tm2 } = await assistant.run(
-                        {
-                            tools,
-                            // additional run messages
-                            messages: this._config.assistant.additionalRun,
-                            chatId,
-                            responseFormat: opts.schema ? { schema: opts.schema } : undefined,
-                            ...this._config.assistant.runParams,
-                        },
-                        opts.chatOptions
-                    );
-                    toolMatches.push(...tm2);
-                    responseMessages.push(...rm2);
-                }
-            } catch (err) {
-                error = err;
-            } finally {
-                // Always delete Chat! A thread lifetime is 60 days
-                await assistant.deleteChat({ chatId });
-            }
-
-            if (error) throw error;
-        } else {
-            const { responseMessages: rm, toolMatches: tm } = await provider.chat(
-                {
-                    tools,
-                    messages,
-                    responseFormat: opts.schema ? { schema: opts.schema } : undefined,
-                },
-                opts.chatOptions
-            );
-            responseMessages = rm || [];
-            toolMatches = tm;
-        }
+        await chat.addMessages(messages);
+        const { snapshot } = await chat.run({ resources: { tools } }, genOpts.runOptions);
 
         // -- parse response messages
 
         let data: any;
 
-        if (opts.parse !== false && opts.schema) {
+        if (genOpts.parse !== false && genOpts.responseFormat) {
             try {
-                data = JSON.parse(responseMessages[0].textContent);
+                data = chat.latestMessage?.textContent ? JSON.parse(chat.latestMessage.textContent) : null;
             } catch (err) {
                 throw new AipiError({
                     message: "Failed to generate data. Did not receive valid JSON.",
@@ -175,7 +94,7 @@ export class DataGenerator {
                 });
             }
         } else {
-            data = responseMessages[0].textContent;
+            data = chat.latestMessage?.textContent;
         }
 
         // -- parse tool data
@@ -183,7 +102,7 @@ export class DataGenerator {
         const toolData: any = {};
 
         // Collect tool data
-        toolMatches.forEach((t) => {
+        snapshot.toolMatches.forEach((t) => {
             const toolName = this.parseToolName(t.tool);
             if (!toolName) return;
 
@@ -192,7 +111,7 @@ export class DataGenerator {
 
             const [field] = entry;
             if (!toolData[field]) toolData[field] = [];
-            toolData[field].push(t.generated);
+            toolData[field].push(t.params);
         });
 
         return {
@@ -248,5 +167,12 @@ export class DataGenerator {
         // Id can be empty as no tools are used
         const generator = new DataGenerator(config);
         return generator.generate(generateOptions);
+    }
+
+    /**
+     * Clear all fields
+     */
+    clearFields() {
+        this._fields.clear();
     }
 }

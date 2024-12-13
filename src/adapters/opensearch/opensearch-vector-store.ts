@@ -1,4 +1,5 @@
-import type { CommonQueryOptions, Vector } from "../../types/index.js";
+import type { Vector } from "../../embeddings/types.js";
+import type { CommonQueryOptions } from "../../types/index.js";
 import { VectorStore } from "../../vector-stores/vector-store.js";
 import type { Client } from "@opensearch-project/opensearch";
 

@@ -1,6 +1,6 @@
 import type { QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types";
 import type { Falsy, NestedProperties } from "../../types/index.js";
-import { AipiError, AipiErrorTag } from "../../errors/aipi-error.js";
+import { AipiError, ErrorTag } from "../../errors/aipi-error.js";
 import { getPropPaths, isFalsy, resolvePropertyPath } from "../../utils/system.js";
 
 type Field<T extends Record<string, any> = any> = NestedProperties<T>;
@@ -53,7 +53,7 @@ export class OpenSearchQueryHelpers<T extends Record<string, any> = any> {
                 if (value.some((v) => v && typeof v === "object")) {
                     throw new AipiError({
                         message: "Array of objects not supported",
-                        tags: [AipiErrorTag.NOT_SUPPORTED],
+                        tags: [ErrorTag.NOT_SUPPORTED],
                     });
                 }
             } else if (value && typeof value === "object") {

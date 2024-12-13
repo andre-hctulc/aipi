@@ -9,7 +9,6 @@
     },
     "dependencies": {
         "@opensearch-project/opensearch": "^2.13.0",
-        "ajv": "^8.17.1",
         "mathjs": "^13.2.0",
         "node-llama-cpp": "^3.3.0",
         "node-nlp": "^4.27.0",
@@ -21,6 +20,7 @@
     "devDependencies": {
         "@types/node": "^22.5.4",
         "@types/wink-tokenizer": "^4.0.6",
+        "ajv": "^8.17.1",
         "fastify": "^5.1.0",
         "natural": "^8.0.1"
     }

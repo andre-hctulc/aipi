@@ -10,5 +10,6 @@ export type CommonQueryOptions = {
     sort?: string;
     after?: string;
     before?: string;
+    cursor?: string;
     order?: "asc" | "desc" | ({} & string);
 };
