@@ -87,8 +87,8 @@ export class ChatAgency<CC = any> extends Agency<undefined, CC> {
         return result;
     }
 
-    protected override async deleteAgent(agentId: string): Promise<void> {
-        await this.persister.delete(this.agentKey(agentId));
+    protected override async deleteAgent(agent: Agent<CC, CC>): Promise<void> {
+        await this.persister.delete(this.agentKey(agent.id));
     }
 
     /**

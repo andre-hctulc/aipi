@@ -88,8 +88,11 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         };
     }
 
-    protected override async deleteAgent(agentId: string, options?: RequestOptions): Promise<void> {
-        await this.provider.client.beta.assistants.del(agentId, options);
+    protected override async deleteAgent(
+        agent: Agent<undefined, OpenAIAgentChatContext>,
+        options?: RequestOptions
+    ): Promise<void> {
+        await this.provider.client.beta.assistants.del(agent.id, options);
     }
 
     protected override async loadAgents(

@@ -1,6 +1,7 @@
 import { Resource } from "../app/index.js";
 import type { Chats } from "../chats/chats.js";
 import type { Message, Tool } from "../chats/types.js";
+import { AipiError } from "../errors/aipi-error.js";
 import { NotFoundError } from "../errors/common-errors.js";
 import type { Reviver } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
@@ -138,11 +139,12 @@ export abstract class Agency<C = any, CC = any>
         return new Agent(await this.createAgentEngine(agentId), agentId, context, config);
     }
 
-    protected abstract deleteAgent(agentId: string): Promise<void>;
+    protected abstract deleteAgent(agent: Agent): Promise<void>;
 
     async killAgent(agentId: string): Promise<void> {
         const agent = await this.findAgent(agentId, true);
-        await this.deleteAgent(agentId);
+        if (!agent) throw new AipiError({ message: "Agent not found." });
+        await this.deleteAgent(agent);
     }
 
     protected abstract loadAgents(queryOptions?: CommonQueryOptions): Promise<ListAgentsResult>;

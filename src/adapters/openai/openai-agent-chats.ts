@@ -129,13 +129,17 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         input: RunChatInput,
         options: RunOpenAIChatOptions = {}
     ): Promise<RunChatResult> {
+        const tools = [...chat.resources.tools, ...(input.resources?.tools || [])];
         // This does not respond with messages, these have to be fetched separately
         const run = await this.provider.client.beta.threads.runs.createAndPoll(
             chat.context.threadId,
             {
                 assistant_id: chat.context.assistantId,
+                // Only allowed when tools are present
+                tool_choice: tools.length ? "auto" : undefined,
                 instructions: options.instructions?.content,
-                tools: input.resources?.tools?.map((t) => assistantTool(t)),
+                // Tools array cannot be empty
+                tools: tools.length ? tools.map((t) => assistantTool(t)) : undefined,
                 response_format: input.responseFormat ? parseFormat(input.responseFormat) : undefined,
                 additional_instructions: options.additionalInstructions?.content,
                 additional_messages: input.messages?.map((msg) => ({

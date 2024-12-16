@@ -91,19 +91,23 @@ export class OpenAIChats extends Chats<undefined> {
         const res = await this.provider.client.chat.completions.create(
             {
                 n: input.choices ?? 1,
-                tool_choice: "auto",
+                // only allowed when tools provided
+                tool_choice: tools.length ? "auto" : undefined,
                 model: options?.model || "gpt-4",
                 messages: messages.map<ChatCompletionMessageParam>((message) => this.oaiMsg(message)),
-                tools: tools
-                    .filter((t) => t.type === "function")
-                    .map<ChatCompletionTool>((t) => ({
-                        type: "function",
-                        function: {
-                            name: t.name,
-                            parameters: t.schema as FunctionParameters,
-                            strict: t.schema ? true : false,
-                        },
-                    })),
+                // tools array cannot be empty
+                tools: tools.length
+                    ? tools
+                          .filter((t) => t.type === "function")
+                          .map<ChatCompletionTool>((t) => ({
+                              type: "function",
+                              function: {
+                                  name: t.name,
+                                  parameters: t.schema as FunctionParameters,
+                                  strict: t.schema ? true : false,
+                              },
+                          }))
+                    : undefined,
                 response_format: input.responseFormat ? parseFormat(input.responseFormat) : undefined,
             },
             options?.requestOptions
