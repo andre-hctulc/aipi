@@ -1,7 +1,9 @@
-import type { RequestOptions } from "openai/core.mjs";
+import type { RequestOptions } from "openai/core";
 
 export interface CommonOpenAIOptions {
-    model?: string;
-    user?: string;
-    requestOptions?: RequestOptions;
+    params?: {
+        model?: string;
+        user?: string;
+        requestOptions?: RequestOptions;
+    };
 }

@@ -3,13 +3,11 @@ import { NotFoundError } from "../errors/common-errors.js";
 import { Persister, type Reviver } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
 import type { AnyOptions } from "../types/types.js";
-import { createId } from "../utils/system.js";
 import {
     Chat,
     type ChatEngine,
     type ChatResources,
     type ChatSnapshot,
-    type RunInit,
     type RunResponse,
     type SerializedChat,
     type UpdateChatData,
@@ -19,10 +17,6 @@ import type { Message, Format } from "./types.js";
 export interface CreateChatInput {
     resources?: Partial<ChatResources>;
     snapshot?: Partial<ChatSnapshot>;
-    /**
-     * Chat context options to pass to {@link Chats.createChatContext}.
-     */
-    contextOptions?: AnyOptions;
     /**
      * Persist the chat after creation. This has no effect if when no persister is set.
      * @default true

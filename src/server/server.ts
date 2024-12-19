@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import { type FastifyListenOptions } from "fastify";
 import { Resource } from "../app/index.js";
 import type { Endpoint, EndpointParams, ParamDef, RawEndpointParams, RefinedEndpoint } from "./endpoints.js";
 import { ParamParser } from "./param-parser.js";
@@ -154,7 +154,7 @@ export abstract class AipiServer<S, Req, Res> extends Resource {
         return raw;
     }
 
-    abstract start(options?: Partial<Fastify.FastifyListenOptions>): void;
+    abstract start(options?: Partial<FastifyListenOptions>): void;
 
     /**
      * Return

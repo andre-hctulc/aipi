@@ -15,15 +15,16 @@ export class OpenAICompleter extends Completer {
     ): Promise<CompleteResult> {
         const res = await this.provider.client.completions.create(
             {
-                model: options?.model ?? "gpt-3.5-turbo-instruct",
+                model: options?.params?.model ?? "gpt-3.5-turbo-instruct",
                 prompt: text,
                 n: options?.choices,
-                user: options?.user,
+                user: options?.params?.user,
             },
-            options?.requestOptions
+            options?.params?.requestOptions
         );
 
         return {
+            toolMatches: [],
             choices: res.choices.map((c) => c.text),
         };
     }

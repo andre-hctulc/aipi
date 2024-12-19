@@ -1,4 +1,4 @@
-import type { RequestOptions } from "openai/core.mjs";
+import type { RequestOptions } from "openai/core";
 import {
     Agency,
     type CreateAgentContextInput,
@@ -35,7 +35,10 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         agentId: string,
         options?: CommonOpenAIOptions
     ): Promise<LoadAgentResult<undefined> | null> {
-        const res = await this.provider.client.beta.assistants.retrieve(agentId, options?.requestOptions);
+        const res = await this.provider.client.beta.assistants.retrieve(
+            agentId,
+            options?.params?.requestOptions
+        );
 
         return {
             config: {
@@ -60,18 +63,18 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
 
     protected override async createAgent(
         input: CreateAgentInput,
-        options: CommonOpenAIOptions = {}
+        options?: CommonOpenAIOptions & AnyOptions
     ): Promise<CreateAgentResult<undefined>> {
         const res = await this.provider.client.beta.assistants.create(
             {
-                model: options.model || "gpt-4-o",
+                model: options?.params?.model || "gpt-4-o",
                 description: input.config.description,
                 name: input.config.name,
                 instructions: input.config.instructions?.content,
                 tools: input.config.tools?.map((t) => assistantTool(t)) || [],
                 tool_resources: input.config.resources,
             },
-            options.requestOptions
+            options?.params?.requestOptions
         );
 
         return {
@@ -106,7 +109,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
                 before: queryOptions?.before,
                 order: queryOptions?.order as "asc" | "desc",
             },
-            options?.requestOptions
+            options?.params?.requestOptions
         );
 
         return { agentIds: res.data.map((a) => a.id) };
@@ -126,9 +129,9 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
                 name: data.config?.name,
                 tools: data.config?.tools && data.config.tools.map((t) => assistantTool(t)),
                 tool_resources: data.config?.resources,
-                model: options.model,
+                model: options.params?.model,
             },
-            options.requestOptions
+            options.params?.requestOptions
         );
     }
 

@@ -1,4 +1,3 @@
-import type { RequestOptions } from "openai/core.mjs";
 import type { Chat } from "../../chats/chat.js";
 import {
     Chats,
@@ -19,7 +18,7 @@ import type {
     ChatCompletionMessageParam,
     ChatCompletionTool,
     FunctionParameters,
-} from "openai/resources/index.mjs";
+} from "openai/resources/index";
 import { parseFormat } from "./system.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
 import type { AnyOptions } from "../../types/types.js";
@@ -84,7 +83,7 @@ export class OpenAIChats extends Chats<undefined> {
     protected override async runChat(
         chat: Chat<undefined>,
         input: RunChatInput,
-        options?: CommonOpenAIOptions
+        options?: CommonOpenAIOptions & AnyOptions
     ): Promise<RunChatResult> {
         const tools = [...chat.tools, ...(input.resources?.tools || [])];
         const messages = [...chat.getMessages(), ...(input.messages || [])];
@@ -93,7 +92,7 @@ export class OpenAIChats extends Chats<undefined> {
                 n: input.choices ?? 1,
                 // only allowed when tools provided
                 tool_choice: tools.length ? "auto" : undefined,
-                model: options?.model || "gpt-4",
+                model: options?.params?.model || "gpt-4",
                 messages: messages.map<ChatCompletionMessageParam>((message) => this.oaiMsg(message)),
                 // tools array cannot be empty
                 tools: tools.length
@@ -110,7 +109,7 @@ export class OpenAIChats extends Chats<undefined> {
                     : undefined,
                 response_format: input.responseFormat ? parseFormat(input.responseFormat) : undefined,
             },
-            options?.requestOptions
+            options?.params?.requestOptions
         );
 
         return {
@@ -120,7 +119,7 @@ export class OpenAIChats extends Chats<undefined> {
                     role: c.message.role,
                     textContent: c.message.content || "",
                     type: c.finish_reason,
-                    id: String(c.index),
+                    id: createId(),
                     index: c.index,
                 })),
                 toolMatches: res.choices

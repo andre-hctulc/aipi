@@ -26,9 +26,11 @@ import type { AnyOptions } from "../../types/types.js";
 import { createId } from "../../utils/system.js";
 
 export interface LlamaCreateContextOptions {
-    contextOptions?: LlamaContextOptions;
-    sessionOptions?: Partial<LlamaChatSession>;
-    systemPrompt?: Message[];
+    params?: {
+        contextOptions?: LlamaContextOptions;
+        sessionOptions?: Partial<LlamaChatSession>;
+        systemPrompt?: Message[];
+    };
 }
 
 interface LlamaChatContext {
@@ -46,10 +48,10 @@ export class LlamaChats extends Chats<LlamaChatContext> {
 
     protected override async createChat(
         input: CreateChatInput,
-        options?: AnyOptions
+        options?: LlamaCreateContextOptions & AnyOptions
     ): Promise<CreateChatResult<LlamaChatContext>> {
         return {
-            context: await this.createChatContext({ chatId: "" }, input.contextOptions),
+            context: await this.createChatContext({ chatId: "" }, options),
             snapshot: {
                 messages: input.snapshot?.messages || [],
                 toolMatches: input.snapshot?.toolMatches || [],
@@ -87,13 +89,13 @@ export class LlamaChats extends Chats<LlamaChatContext> {
 
     protected override async createChatContext(
         input: CreateChatContextInput,
-        options: LlamaCreateContextOptions = {}
+        options?: LlamaCreateContextOptions & AnyOptions
     ): Promise<LlamaChatContext> {
-        const context = await this.provider.model.createContext({ ...options?.contextOptions });
+        const context = await this.provider.model.createContext({ ...options?.params?.contextOptions });
         const session = new LlamaChatSession({
             contextSequence: context.getSequence(),
-            systemPrompt: flattenMessages(options.systemPrompt || [], "system"),
-            ...options?.sessionOptions,
+            systemPrompt: flattenMessages(options?.params?.systemPrompt || [], "system"),
+            ...options?.params?.sessionOptions,
         });
 
         return { session };
@@ -127,7 +129,12 @@ export class LlamaChats extends Chats<LlamaChatContext> {
                 const { responseText } = await chat.context.session.promptWithMeta(message.textContent, {
                     functions,
                 });
-                responseMessages.push({ textContent: responseText, role: "system", index: i, id: String(i) });
+                responseMessages.push({
+                    textContent: responseText,
+                    role: "system",
+                    index: i,
+                    id: createId(i),
+                });
             }
 
             i++;

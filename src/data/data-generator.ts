@@ -1,6 +1,8 @@
 import { AipiError } from "../errors/aipi-error.js";
-import type { AnyOptions, Chat } from "../index.js";
-import type { Message, Format, Tool } from "../chats/types.js";
+import type { Message, Format, Tool, ToolMatch } from "../chats/types.js";
+import { Chat } from "../chats/chat.js";
+import { Completer, type CompleteOptions } from "../chats/completer.js";
+import type { AnyOptions } from "../types/types.js";
 
 export interface GenerateOptions {
     /**
@@ -9,6 +11,7 @@ export interface GenerateOptions {
     messages?: Message[];
     responseFormat?: Format;
     runOptions?: AnyOptions;
+    completeOptions?: CompleteOptions;
     tools?: Tool[];
     /**
      * Parse the response as JSON if a schema is provided.
@@ -27,7 +30,7 @@ export interface DataGeneratorConfig {
      */
     id?: string;
     baseTools?: Tool[];
-    chat: Chat;
+    engine: Chat | Completer;
 }
 
 export interface Generated {
@@ -73,36 +76,50 @@ export class DataGenerator {
             });
         });
 
-        // -- add messages to chat and run it
-
-        const chat = this._config.chat;
-
-        await chat.addMessages(messages);
-        const { snapshot } = await chat.run({ resources: { tools } }, genOpts.runOptions);
-
-        // -- parse response messages
-
+        const engine = this._config.engine;
+        let toolMatches: ToolMatch[];
         let data: any;
+
+        // ## Chat
+
+        if (engine instanceof Chat) {
+            // -- add messages to chat and run it
+
+            await engine.addMessages(messages);
+            const { snapshot } = await engine.run({ resources: { tools } }, genOpts.runOptions);
+
+            toolMatches = snapshot.toolMatches;
+
+            // -- parse response messages
+
+            data = engine.latestMessage?.textContent;
+        }
+        // ## Completer
+        else {
+            const { choices, toolMatches: tm } = await engine.complete(
+                messages[0]?.textContent || "",
+                genOpts?.completeOptions
+            );
+            toolMatches = tm;
+            data = choices[0];
+        }
+
+        // -- parse tool data
 
         if (genOpts.parse !== false && genOpts.responseFormat) {
             try {
-                data = chat.latestMessage?.textContent ? JSON.parse(chat.latestMessage.textContent) : null;
+                data = data ? JSON.parse(data) : null;
             } catch (err) {
                 throw new AipiError({
                     message: "Failed to generate data. Did not receive valid JSON.",
                     cause: err,
                 });
             }
-        } else {
-            data = chat.latestMessage?.textContent;
         }
-
-        // -- parse tool data
-
         const toolData: any = {};
 
         // Collect tool data
-        snapshot.toolMatches.forEach((t) => {
+        toolMatches.forEach((t) => {
             const toolName = this.parseToolName(t.tool);
             if (!toolName) return;
 

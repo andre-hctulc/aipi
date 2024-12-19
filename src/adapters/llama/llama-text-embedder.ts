@@ -4,10 +4,12 @@ import type { Vector } from "../../embeddings/types.js";
 import { LlamaProvider } from "./llama-provider.js";
 
 interface LlamaEmbeddingOptions extends TextEmbeddingOptions {
-    /**
-     * @default true
-     */
-    parallel?: boolean;
+    params?: {
+        /**
+         * @default true
+         */
+        parallel?: boolean;
+    };
 }
 
 export class LlamaTextEmbedder extends TextEmbedder {
@@ -20,7 +22,7 @@ export class LlamaTextEmbedder extends TextEmbedder {
     }
 
     override async embed(text: string[], options?: LlamaEmbeddingOptions): Promise<Vector[]> {
-        if (options?.parallel === false) {
+        if (options?.params?.parallel === false) {
             const vectors: Vector[] = [];
 
             for (const t of text) {

@@ -9,4 +9,9 @@ export type NestedProperties<T> = T extends object
       }[keyof T]
     : never;
 
-export type AnyOptions =  Record<string, any>;
+export type AnyOptions = {
+    /**
+     * Adapter specific options.
+     */
+    params?: Record<string, any>;
+};

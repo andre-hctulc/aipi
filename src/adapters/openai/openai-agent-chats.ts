@@ -1,4 +1,4 @@
-import type { RequestOptions } from "openai/core.mjs";
+import type { RequestOptions } from "openai/core";
 import type { Chat } from "../../chats/chat.js";
 import {
     Chats,
@@ -19,7 +19,7 @@ import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, parseFormat } from "./system.js";
 import { createId } from "../../utils/system.js";
-import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs.mjs";
+import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
 import { NotSupportedError } from "../../errors/common-errors.js";
 import type { Instructions } from "../../agents/types.js";
 
@@ -57,7 +57,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
 
     override async createChat(
         input: CreateChatInput,
-        requestOptions?: RequestOptions
+        requestOptions?: RequestOptions & AnyOptions
     ): Promise<CreateChatResult<OpenAIAgentChatContext>> {
         // A run is executed in a thread. A thread can be cerated manually. Then we would need to create a thread and then a tun.
         // We use this helper method to create a thread and run it in one go.
@@ -127,7 +127,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
     protected override async runChat(
         chat: Chat<OpenAIAgentChatContext>,
         input: RunChatInput,
-        options: RunOpenAIChatOptions = {}
+        options?: RunOpenAIChatOptions & AnyOptions
     ): Promise<RunChatResult> {
         const tools = [...chat.resources.tools, ...(input.resources?.tools || [])];
         // This does not respond with messages, these have to be fetched separately
@@ -137,18 +137,18 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
                 assistant_id: chat.context.assistantId,
                 // Only allowed when tools are present
                 tool_choice: tools.length ? "auto" : undefined,
-                instructions: options.instructions?.content,
+                instructions: options?.instructions?.content,
                 // Tools array cannot be empty
                 tools: tools.length ? tools.map((t) => assistantTool(t)) : undefined,
                 response_format: input.responseFormat ? parseFormat(input.responseFormat) : undefined,
-                additional_instructions: options.additionalInstructions?.content,
+                additional_instructions: options?.additionalInstructions?.content,
                 additional_messages: input.messages?.map((msg) => ({
                     content: msg.textContent || "",
                     role: msg.role as any,
                     attachments: msg.attachments,
                 })),
             },
-            options.requestOptions
+            options?.requestOptions
         );
 
         return {
@@ -204,7 +204,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         messageId: string,
         options?: CommonOpenAIOptions
     ): Promise<void> {
-        await this.provider.client.beta.threads.messages.del(chat.id, messageId, options?.requestOptions);
+        await this.provider.client.beta.threads.messages.del(chat.id, messageId, options?.params?.requestOptions);
     }
 
     protected override async loadMessages(
@@ -220,7 +220,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
                 before: queryOptions.before,
                 order: queryOptions.order as "asc" | "desc",
             },
-            options.requestOptions
+            options.params?.requestOptions
         );
 
         return res.data.map((m) => ({
@@ -241,7 +241,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         const res = await this.provider.client.beta.threads.messages.retrieve(
             chat.id,
             messageId,
-            options?.requestOptions
+            options?.params?.requestOptions
         );
 
         return {

@@ -1,8 +1,8 @@
 import OpenAI, { type ClientOptions } from "openai";
-import type { RequestOptions, Uploadable } from "openai/core.mjs";
+import type { RequestOptions, Uploadable } from "openai/core";
 import { Resource } from "../../app/index.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
-import type { VectorStoreUpdateParams } from "openai/resources/beta/vector-stores/vector-stores.mjs";
+import type { VectorStoreUpdateParams } from "openai/resources/beta/vector-stores/vector-stores";
 
 export interface ListVectorStoresResult {
     stores: { id: string; name: string }[];

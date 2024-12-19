@@ -1,4 +1,4 @@
-import type { JSONSchema } from "openai/lib/jsonschema.mjs";
+import type { JSONSchema } from "openai/lib/jsonschema";
 import { JSONSchemaValidator } from "../../schemas/json-schema-validator.js";
 import { Ajv } from "ajv";
 
