@@ -20,9 +20,9 @@ import type { Message, ToolMatch } from "../../chats/types.js";
 import { LlamaProvider } from "./llama-provider.js";
 import { NotSupportedError } from "../../errors/common-errors.js";
 import { flattenMessages } from "./system.js";
-import type { Chat } from "../../chats/chat.js";
+import { Chat, type ChatSnapshot } from "../../chats/chat.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
-import type { AnyOptions } from "../../types/types.js";
+import type { BaseOptions } from "../../types/types.js";
 import { createId } from "../../utils/system.js";
 
 export interface LlamaCreateContextOptions {
@@ -48,7 +48,7 @@ export class LlamaChats extends Chats<LlamaChatContext> {
 
     protected override async createChat(
         input: CreateChatInput,
-        options?: LlamaCreateContextOptions & AnyOptions
+        options?: LlamaCreateContextOptions & BaseOptions
     ): Promise<CreateChatResult<LlamaChatContext>> {
         return {
             context: await this.createChatContext({ chatId: "" }, options),
@@ -82,14 +82,14 @@ export class LlamaChats extends Chats<LlamaChatContext> {
      */
     protected override async loadChats(
         queryOptions?: CommonQueryOptions,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<ListChatsResult> {
         return { chatIds: [] };
     }
 
     protected override async createChatContext(
         input: CreateChatContextInput,
-        options?: LlamaCreateContextOptions & AnyOptions
+        options?: LlamaCreateContextOptions & BaseOptions
     ): Promise<LlamaChatContext> {
         const context = await this.provider.model.createContext({ ...options?.params?.contextOptions });
         const session = new LlamaChatSession({
@@ -109,6 +109,9 @@ export class LlamaChats extends Chats<LlamaChatContext> {
             [name: string]: ChatSessionModelFunction;
         } = {};
 
+        const toolMatches: ToolMatch[] = [];
+        const responseMessages: Message[] = [];
+        
         tools.forEach((tool) => {
             functions[tool.name] = defineChatSessionFunction({
                 params: tool.schema as any,
@@ -119,8 +122,6 @@ export class LlamaChats extends Chats<LlamaChatContext> {
             });
         });
 
-        const toolMatches: ToolMatch[] = [];
-        const responseMessages: Message[] = [];
 
         let i = 0;
 
@@ -140,12 +141,14 @@ export class LlamaChats extends Chats<LlamaChatContext> {
             i++;
         }
 
+        const snapshot: ChatSnapshot = {
+            messages: responseMessages,
+            toolMatches,
+        };
+
         return {
             runId: createId(),
-            snapshot: {
-                messages: responseMessages,
-                toolMatches,
-            },
+            snapshot: Chat.stackSnapshots(chat.getSnapshot(), snapshot),
         };
     }
 

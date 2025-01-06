@@ -2,6 +2,8 @@ import { Resource } from "../app/index.js";
 import type { JSONSchema } from "../types/json-schema.js";
 
 export abstract class JSONSchemaValidator extends Resource {
+    static icon = "👮‍♀️";
+    
     abstract validate(schema: any, data: any): { errors: string[] };
 
     isValid(schema: JSONSchema, data: any): boolean {

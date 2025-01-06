@@ -1,5 +1,5 @@
 import WTokenizer from "wink-tokenizer";
-import { Splitter, type TextPart } from "../../nl/splitter.js";
+import { Splitter, type Segment } from "../../nl/splitter.js";
 
 /**
  * A `Tokenizer` implementation using `the wink-tokenizer` package.
@@ -7,7 +7,12 @@ import { Splitter, type TextPart } from "../../nl/splitter.js";
 export class WinkTokenizer extends Splitter {
     private instance = new WTokenizer();
 
-    override tokenize(text: string): TextPart[] {
-        return this.instance.tokenize(text);
+    override tokenize(text: string): Segment[] {
+        return this.instance.tokenize(text).map((token) => ({
+            text: token.value,
+            range: [0, 0],
+            children: [],
+            tag: token.tag,
+        }));
     }
 }

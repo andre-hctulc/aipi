@@ -7,6 +7,8 @@ export interface InputReaderConfig {
 }
 
 export abstract class InputReader extends Resource {
+    static icon = "📘";
+
     private fileStorage: FileStorage | undefined;
 
     constructor(config: InputReaderConfig = {}) {

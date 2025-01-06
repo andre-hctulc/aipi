@@ -1,7 +1,19 @@
-import { JSONSchemaBuilder } from "../../schemas/json-schema-builder.js";
-import type { JSONSchema, JSONSchemaTypeName } from "../../types/json-schema.js";
+import { JSONSchemaBuilder } from "./json-schema-builder.js";
+import type { JSONSchema, JSONSchemaTypeName } from "../types/json-schema.js";
 
-export class OpenAIJSONSchemaBuilder extends JSONSchemaBuilder {
+/**
+ * Builds schemas suitable for function calls.
+ * 
+ * These schemas are more strict, with these features:
+ * 
+ * - All properties are required
+ * - No ambiguous types
+ * - No additional properties
+ * - No $schema, $id, $ref, $defs, $comment, title, format
+ *
+ * Some of these features can be adjusted on non fitting schemas.
+ */
+export class StrictJSONSchemaBuilder extends JSONSchemaBuilder {
     /**
      * Mutates the schema so it can be used in the OpenAI API.
      * If the schema can not be transformed to a valid schema, it returns null.

@@ -1,5 +1,10 @@
-import { split, splitAST, type splitOptions } from "sentence-splitter";
-import { Splitter, type TextPart } from "../../nl/splitter.js";
+import {
+    split,
+    splitAST,
+    type splitOptions,
+    type TxtParentNodeWithSentenceNodeContent,
+} from "sentence-splitter";
+import { Splitter, type Segment } from "../../nl/splitter.js";
 
 /**
  * A `Tokenizer` implementation using the `sentence-splitter` package.
@@ -9,11 +14,17 @@ export class SentenceSplitterTokenizer extends Splitter {
         super();
     }
 
-    override tokenize(text: string, options?: splitOptions): TextPart[] {
-        return split(text, options || this.options).map((value) => ({
-            tag: this.snakeCase(value.type),
-            value: value.raw,
-        }));
+    override tokenize(text: string, options?: { params?: splitOptions }): Segment[] {
+        return split(text, options?.params || this.options).map((node) => this.parseNode(node));
+    }
+
+    private parseNode(node: TxtParentNodeWithSentenceNodeContent): Segment {
+        return {
+            tag: this.snakeCase(node.type),
+            text: node.raw,
+            range: node.range,
+            children: (node as any).children?.map((node: any) => this.parseNode(node)) || [],
+        };
     }
 
     private snakeCase(camelCase: string): string {

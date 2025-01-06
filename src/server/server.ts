@@ -23,6 +23,8 @@ interface ServerErrorObject {
  * @template Res The response object
  */
 export abstract class AipiServer<S, Req, Res> extends Resource {
+    static icon = "🌐";
+    
     constructor(
         readonly server: S,
         protected readonly options: AipiServerOptions = {}

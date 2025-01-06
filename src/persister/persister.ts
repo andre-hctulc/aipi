@@ -21,6 +21,8 @@ export type PersisterObjectKey = {
 };
 
 export abstract class Persister<K, V> extends Resource {
+    static icon = "💾";
+    
     abstract save(key: K, value: V, options?: PersisterSaveOptions): Promise<void>;
     abstract load(key: K): Promise<V | undefined>;
     abstract delete(key: K): Promise<void>;

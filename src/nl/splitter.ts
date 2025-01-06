@@ -1,4 +1,5 @@
 import { Resource } from "../app/index.js";
+import type { BaseOptions } from "../types/types.js";
 
 export type TextPartTag =
     | "sentence"
@@ -14,20 +15,25 @@ export type TextPartTag =
     | "symbol"
     | "currency"
     | "time"
+    | "paragraph"
     | "date"
     | "abbreviation"
     | "quoted_phrase"
     | "ordinal"
     | "character";
 
-export interface TextPart {
+export interface Segment {
     tag: (string & {}) | TextPartTag;
-    value: string;
+    text: string;
+    range: [number, number] | readonly [number, number];
+    children: Segment[];
 }
 
 /**
  * Base class for all kinds of tokenizers or other text splitters.
  */
 export abstract class Splitter extends Resource {
-    abstract tokenize(text: string): TextPart[];
+    static icon = "🔪";
+    
+    abstract tokenize(text: string, options?: BaseOptions): Segment[];
 }

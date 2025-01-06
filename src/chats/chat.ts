@@ -1,10 +1,10 @@
 import { AipiError } from "../errors/aipi-error.js";
 import { type Persistable } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
-import { mergeObjects } from "../utils/system.js";
-import type { Message, Tool, ToolMatch } from "./types.js";
+import { deepMerge } from "../utils/system.js";
+import type { Format, Message, Tool, ToolMatch } from "./types.js";
 import type { Chats } from "./chats.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseInput, BaseOptions } from "../types/types.js";
 
 export interface ChatSnapshot {
     messages: Message[];
@@ -42,7 +42,7 @@ export interface ChatEngine<C = any> {
     deleteMessage(chat: Chat<C>, messageId: string): Promise<void>;
     loadMessages(chat: Chat<C>, queryOptions?: CommonQueryOptions): Promise<Message[]>;
     refresh(chat: Chat<C>): Promise<ChatSnapshot>;
-    run(chat: Chat<C>, init: RunInit, options?: AnyOptions): Promise<RunResponse>;
+    run(chat: Chat<C>, init: RunInit, options?: BaseOptions): Promise<RunResponse>;
     update(chat: Chat<C>, data: UpdateChatData): Promise<void>;
     /**
      *
@@ -51,8 +51,16 @@ export interface ChatEngine<C = any> {
     onChange(chat: Chat<C>): void;
 }
 
-export interface RunInit {
+export interface RunInit extends BaseInput {
+    /**
+     * Run specific messages
+     */
+    messages?: Message[];
+    /**
+     * Run specific resources.
+     */
     resources?: Partial<ChatResources>;
+    responseFormat?: Format;
 }
 
 export interface ChatOptions {
@@ -70,6 +78,13 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
     private _context: C;
     private _snapshot: ChatSnapshot;
     private _autoPersist: boolean;
+
+    static stackSnapshots(...snapshots: ChatSnapshot[]): ChatSnapshot {
+        return {
+            messages: snapshots.flatMap((s) => s.messages),
+            toolMatches: snapshots.flatMap((s) => s.toolMatches),
+        };
+    }
 
     constructor(
         private engine: ChatEngine<C>,
@@ -118,6 +133,9 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
             snapshot.messages.push(...message);
             return snapshot;
         });
+    }
+    addMessage(...messages: Message[]): void {
+        this.addMessages(messages);
     }
 
     /**
@@ -192,14 +210,14 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
      */
     async update(data: UpdateChatData): Promise<void> {
         await this.engine.update(this, data);
-        this._resources = mergeObjects(this._resources, data.resources);
+        this._resources = deepMerge(this._resources, data.resources);
         this.engine.onChange?.(this);
     }
 
     /**
      * Run the chat using the chat engine.
      */
-    async run(init: RunInit, options?: AnyOptions): Promise<RunResponse> {
+    async run(init: RunInit, options?: BaseOptions): Promise<RunResponse> {
         const res = await this.engine.run(this, init, options);
         this.updateSnapshot(res.snapshot);
         this._lastRunId = res.runId;
@@ -226,7 +244,7 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
                 toolMatches: [...this._snapshot.toolMatches],
             });
         } else {
-            this._snapshot = mergeObjects(this._snapshot, snapshot);
+            this._snapshot = deepMerge(this._snapshot, snapshot);
         }
     }
 

@@ -1,16 +1,8 @@
 import type { LlamaEmbeddingContext } from "node-llama-cpp";
-import { TextEmbedder, type TextEmbeddingOptions } from "../../embeddings/text-embedder.js";
+import { TextEmbedder, type TextEmbedInput } from "../../embeddings/text-embedder.js";
 import type { Vector } from "../../embeddings/types.js";
 import { LlamaProvider } from "./llama-provider.js";
-
-interface LlamaEmbeddingOptions extends TextEmbeddingOptions {
-    params?: {
-        /**
-         * @default true
-         */
-        parallel?: boolean;
-    };
-}
+import type { BaseOptions } from "../../types/types.js";
 
 export class LlamaTextEmbedder extends TextEmbedder {
     private provider!: LlamaProvider;
@@ -21,7 +13,14 @@ export class LlamaTextEmbedder extends TextEmbedder {
         this.context = await this.provider.model.createEmbeddingContext();
     }
 
-    override async embed(text: string[], options?: LlamaEmbeddingOptions): Promise<Vector[]> {
+    override async embed(
+        { text }: TextEmbedInput,
+        options?: BaseOptions<{ parallel?: boolean }>
+    ): Promise<Vector[]> {
+        if (!Array.isArray(text)) {
+            text = [text];
+        }
+
         if (options?.params?.parallel === false) {
             const vectors: Vector[] = [];
 
@@ -33,11 +32,13 @@ export class LlamaTextEmbedder extends TextEmbedder {
             return vectors;
         }
 
-        return Promise.all(
+        const vectors = await Promise.all(
             text.map(async (text) => {
                 const emb = await this.context.getEmbeddingFor(text);
                 return emb.vector;
             })
         );
+
+        return vectors;
     }
 }

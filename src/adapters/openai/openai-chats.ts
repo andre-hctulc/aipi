@@ -1,4 +1,4 @@
-import type { Chat } from "../../chats/chat.js";
+import { Chat, type ChatSnapshot } from "../../chats/chat.js";
 import {
     Chats,
     type CreateChatContextInput,
@@ -21,7 +21,7 @@ import type {
 } from "openai/resources/index";
 import { parseFormat } from "./system.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
-import type { AnyOptions } from "../../types/types.js";
+import type { BaseOptions } from "../../types/types.js";
 import { createId } from "../../utils/system.js";
 
 export class OpenAIChats extends Chats<undefined> {
@@ -35,21 +35,21 @@ export class OpenAIChats extends Chats<undefined> {
 
     protected override async createChat(
         input: CreateChatInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<CreateChatResult<undefined>> {
         return {
+            chatId: createId(),
             context: undefined,
             snapshot: {
                 messages: input.snapshot?.messages || [],
                 toolMatches: input.snapshot?.toolMatches || [],
             },
-            chatId: createId(),
         };
     }
 
     protected override async createChatContext(
         input: CreateChatContextInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<undefined> {
         return undefined;
     }
@@ -70,7 +70,7 @@ export class OpenAIChats extends Chats<undefined> {
      */
     protected override async loadChats(
         queryOptions?: CommonQueryOptions,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<ListChatsResult> {
         return { chatIds: [] };
     }
@@ -83,13 +83,12 @@ export class OpenAIChats extends Chats<undefined> {
     protected override async runChat(
         chat: Chat<undefined>,
         input: RunChatInput,
-        options?: CommonOpenAIOptions & AnyOptions
+        options?: CommonOpenAIOptions & BaseOptions
     ): Promise<RunChatResult> {
         const tools = [...chat.tools, ...(input.resources?.tools || [])];
         const messages = [...chat.getMessages(), ...(input.messages || [])];
         const res = await this.provider.client.chat.completions.create(
             {
-                n: input.choices ?? 1,
                 // only allowed when tools provided
                 tool_choice: tools.length ? "auto" : undefined,
                 model: options?.params?.model || "gpt-4",
@@ -112,41 +111,46 @@ export class OpenAIChats extends Chats<undefined> {
             options?.params?.requestOptions
         );
 
+        const choice = res.choices[0];
+
+        const runSnapshot: ChatSnapshot = {
+            messages: [
+                {
+                    role: choice.message.role,
+                    textContent: choice.message.content || "",
+                    id: createId(),
+                    index: choice.index,
+                },
+            ],
+            toolMatches: res.choices
+                .map<ToolMatch[]>(({ message, index }) => {
+                    if (!message.tool_calls) return [];
+
+                    let data: any;
+                    let err: Error | undefined;
+
+                    return message.tool_calls.map((tc) => {
+                        try {
+                            data = JSON.parse(tc.function.arguments || "");
+                        } catch (e) {
+                            err = e as Error;
+                        }
+
+                        return {
+                            tool: tc.function.name,
+                            params: data,
+                            rawParams: err ? tc.function.arguments : undefined,
+                            parseError: err,
+                            index: index,
+                        } as ToolMatch;
+                    });
+                })
+                .flat(),
+        };
+
         return {
             runId: createId(),
-            snapshot: {
-                messages: res.choices.map<Message>((c) => ({
-                    role: c.message.role,
-                    textContent: c.message.content || "",
-                    type: c.finish_reason,
-                    id: createId(),
-                    index: c.index,
-                })),
-                toolMatches: res.choices
-                    .map<ToolMatch[]>(({ message, index }) => {
-                        if (!message.tool_calls) return [];
-
-                        let data: any;
-                        let err: Error | undefined;
-
-                        return message.tool_calls.map((tc) => {
-                            try {
-                                data = JSON.parse(tc.function.arguments || "");
-                            } catch (e) {
-                                err = e as Error;
-                            }
-
-                            return {
-                                tool: tc.function.name,
-                                params: data,
-                                rawParams: err ? tc.function.arguments : undefined,
-                                parseError: err,
-                                index: index,
-                            } as ToolMatch;
-                        });
-                    })
-                    .flat(),
-            },
+            snapshot: Chat.stackSnapshots(chat.getSnapshot(), runSnapshot),
         };
     }
 

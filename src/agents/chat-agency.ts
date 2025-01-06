@@ -1,7 +1,7 @@
 import type { SerializedChat } from "../chats/chat.js";
 import type { Chats } from "../chats/chats.js";
 import { Persister } from "../persister/persister.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseOptions } from "../types/types.js";
 import { createId } from "../utils/system.js";
 import {
     Agency,
@@ -36,7 +36,7 @@ export class ChatAgency<CC = any> extends Agency<undefined, CC> {
 
     protected override async createContext(
         input: CreateAgentContextInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<undefined> {
         return undefined;
     }
@@ -64,7 +64,7 @@ export class ChatAgency<CC = any> extends Agency<undefined, CC> {
 
     protected override async createAgent(
         input: CreateAgentInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<CreateAgentResult<undefined>> {
         const result: CreateAgentResult<undefined> = {
             agentId: createId(),

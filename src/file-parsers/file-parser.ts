@@ -1,8 +1,9 @@
 import { AipiError, ErrorTag } from "../errors/aipi-error.js";
 import { Resource } from "../app/resource.js";
 import type { WithScopes } from "../app/index.js";
+import type { BaseConfig, BaseOptions } from "../types/types.js";
 
-export interface FileReaderConfig {
+export interface FileReaderConfig extends BaseConfig {
     /**
      * Maximum file size in bytes
      */
@@ -23,28 +24,30 @@ export type MimeTypeLike = File | string;
  * Parses the text from files. Use the `LiteralParser` for plain text files.
  */
 export abstract class FileParser extends Resource implements WithScopes<File> {
+    static icon = "📄";
+    
     // default config values
     private static readonly DEFAULT_PRIORITY = 100;
 
-    private _config: FileReaderConfig;
+    protected config: FileReaderConfig;
 
     constructor(config: FileReaderConfig = {}) {
         super();
-        this._config = config;
+        this.config = config;
     }
 
     get priority(): number {
-        return this._config.priority ?? FileParser.DEFAULT_PRIORITY;
+        return this.config.priority ?? FileParser.DEFAULT_PRIORITY;
     }
 
     abstract covers(file: File): boolean;
-    protected abstract extractText(file: File): Promise<string>;
+    protected abstract extractText(file: File, options?: BaseOptions): Promise<string>;
 
     /**
      * @throws `AipiError` if the `extractText` implementation fails
      */
     async text(file: File): Promise<string> {
-        if (this._config.maxSize && file.size > this._config.maxSize) {
+        if (this.config.maxSize && file.size > this.config.maxSize) {
             throw new AipiError({ message: "File size exceeds limit" });
         }
 

@@ -27,7 +27,9 @@ export abstract class AipiRegistry {
         let text = "## *aipi* Registry 📖 ##\n";
 
         this.registry.forEach((value, key) => {
-            text += `\n🪣  ${key.name}(s):\n`;
+            const Key = this.getKey(key);
+
+            text += `\n${(Key as any).icon || "🪣"} ${key.name}(s):\n`;
             value.forEach((entry) => {
                 text += `   ${entry.resource.constructor.name} <${entry.priority}>\n`;
             });

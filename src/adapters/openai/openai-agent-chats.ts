@@ -1,5 +1,5 @@
 import type { RequestOptions } from "openai/core";
-import type { Chat } from "../../chats/chat.js";
+import { Chat, type ChatSnapshot } from "../../chats/chat.js";
 import {
     Chats,
     type CreateChatContextInput,
@@ -14,7 +14,7 @@ import {
 } from "../../chats/chats.js";
 import type { Message, ToolMatch } from "../../chats/types.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
-import type { AnyOptions } from "../../types/types.js";
+import type { BaseOptions } from "../../types/types.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, parseFormat } from "./system.js";
@@ -49,7 +49,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
 
     protected override async createChatContext(
         input: CreateChatContextInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<OpenAIAgentChatContext> {
         const [chatId, threadId] = input.chatId.split("/");
         return { threadId, assistantId: this.assistantId };
@@ -57,7 +57,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
 
     override async createChat(
         input: CreateChatInput,
-        requestOptions?: RequestOptions & AnyOptions
+        requestOptions?: RequestOptions & BaseOptions
     ): Promise<CreateChatResult<OpenAIAgentChatContext>> {
         // A run is executed in a thread. A thread can be cerated manually. Then we would need to create a thread and then a tun.
         // We use this helper method to create a thread and run it in one go.
@@ -119,7 +119,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
 
     protected override loadChats(
         queryOptions?: CommonQueryOptions,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<ListChatsResult> {
         throw new NotSupportedError("loadChats");
     }
@@ -127,7 +127,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
     protected override async runChat(
         chat: Chat<OpenAIAgentChatContext>,
         input: RunChatInput,
-        options?: RunOpenAIChatOptions & AnyOptions
+        options?: RunOpenAIChatOptions & BaseOptions
     ): Promise<RunChatResult> {
         const tools = [...chat.resources.tools, ...(input.resources?.tools || [])];
         // This does not respond with messages, these have to be fetched separately
@@ -151,14 +151,16 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
             options?.requestOptions
         );
 
+        const snapshot: ChatSnapshot = {
+            messages: [],
+            toolMatches:
+                run.required_action?.submit_tool_outputs.tool_calls.map<ToolMatch>((t) =>
+                    this.parseToolMatch(t)
+                ) || [],
+        };
+
         return {
-            snapshot: {
-                toolMatches:
-                    run.required_action?.submit_tool_outputs.tool_calls.map<ToolMatch>((t) =>
-                        this.parseToolMatch(t)
-                    ) || [],
-                messages: [],
-            },
+            snapshot: Chat.stackSnapshots(chat.getSnapshot(), snapshot),
             runId: run.id,
         };
     }
@@ -204,7 +206,11 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         messageId: string,
         options?: CommonOpenAIOptions
     ): Promise<void> {
-        await this.provider.client.beta.threads.messages.del(chat.id, messageId, options?.params?.requestOptions);
+        await this.provider.client.beta.threads.messages.del(
+            chat.id,
+            messageId,
+            options?.params?.requestOptions
+        );
     }
 
     protected override async loadMessages(

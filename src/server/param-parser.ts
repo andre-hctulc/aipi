@@ -11,6 +11,8 @@ export class ParamError extends AipiError {
 }
 
 export abstract class ParamParser extends Resource implements WithScopes<ParamDef> {
+    static icon = "﹫";
+
     abstract covers(param: ParamDef): boolean;
 
     /**

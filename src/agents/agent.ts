@@ -3,7 +3,7 @@ import type { CreateChatInput } from "../chats/chats.js";
 import type { Tool } from "../chats/types.js";
 import type { Persistable } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseOptions } from "../types/types.js";
 import type { Instructions } from "./types.js";
 
 export interface AgentConfig {
@@ -22,7 +22,7 @@ export interface AgentEngine<C = any, CC = any> {
     loadChat(agent: Agent<C, CC>, chatId: string): Promise<Chat<CC> | null>;
     deleteChat(agent: Agent<C, CC>, chatId: string): Promise<void>;
     listChats(agent: Agent<C, CC>, queryOptions?: CommonQueryOptions): Promise<string[]>;
-    startChat(agent: Agent<C, CC>, input: CreateChatInput, options?: AnyOptions): Promise<Chat<CC>>;
+    startChat(agent: Agent<C, CC>, input: CreateChatInput, options?: BaseOptions): Promise<Chat<CC>>;
     update(agent: Agent<C, CC>, data: UpdateAgentData): Promise<void>;
     refresh(agent: Agent<C, CC>): Promise<AgentConfig>;
 }
@@ -70,7 +70,7 @@ export class Agent<C = any, CC = any> implements Persistable<SerializedAgent> {
         return this.engine.listChats(this, queryOptions);
     }
 
-    async startChat(input: CreateChatInput, options?: AnyOptions): Promise<Chat<CC>> {
+    async startChat(input: CreateChatInput, options?: BaseOptions): Promise<Chat<CC>> {
         return this.engine.startChat(this, input, options);
     }
 

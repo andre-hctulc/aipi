@@ -2,19 +2,20 @@ import { Resource } from "../app/index.js";
 import { NotFoundError } from "../errors/common-errors.js";
 import { Persister, type Reviver } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseInput, BaseOptions, BaseResult } from "../types/types.js";
 import {
     Chat,
     type ChatEngine,
     type ChatResources,
     type ChatSnapshot,
+    type RunInit,
     type RunResponse,
     type SerializedChat,
     type UpdateChatData,
 } from "./chat.js";
 import type { Message, Format } from "./types.js";
 
-export interface CreateChatInput {
+export interface CreateChatInput extends BaseInput {
     resources?: Partial<ChatResources>;
     snapshot?: Partial<ChatSnapshot>;
     /**
@@ -24,13 +25,13 @@ export interface CreateChatInput {
     persist?: boolean;
 }
 
-export interface CreateChatResult<C = any> {
+export interface CreateChatResult<C = any> extends BaseResult {
     context: C;
     snapshot: ChatSnapshot;
     chatId: string;
 }
 
-export interface LoadChatResult<C = any> {
+export interface LoadChatResult<C = any> extends BaseResult {
     snapshot: ChatSnapshot;
     resources: ChatResources;
     /**
@@ -39,7 +40,7 @@ export interface LoadChatResult<C = any> {
     context: C;
 }
 
-export interface ListChatsResult {
+export interface ListChatsResult extends BaseResult {
     chatIds: string[];
 }
 
@@ -56,33 +57,19 @@ export interface ChatsConfig {
     persisterTags?: string[];
 }
 
-export interface RunChatInput {
-    /**
-     * Run specific messages
-     */
-    messages?: Message[];
-    /**
-     * Run specific resources
-     */
-    resources?: Partial<ChatResources>;
-    /**
-     * Number of choices to generate.
-     */
-    choices?: number;
-    responseFormat?: Format;
-}
+export interface RunChatInput extends BaseInput, RunInit {}
 
-export interface RunChatResult extends RunResponse {}
+export interface RunChatResult extends RunResponse, BaseResult {}
 
-export interface RefreshChatResult {
+export interface RefreshChatResult extends BaseResult {
     snapshot: ChatSnapshot;
 }
 
-export interface UpdateChatInput {
+export interface UpdateChatInput extends BaseInput {
     data?: UpdateChatData;
 }
 
-export interface CreateChatContextInput {
+export interface CreateChatContextInput extends BaseInput {
     /**
      * Can be empty when a chat is newly created.
      */
@@ -95,6 +82,8 @@ export interface CreateChatContextInput {
  * When and how chats are loaded and run is up to the implementation.
  */
 export abstract class Chats<C = any> extends Resource implements Reviver<SerializedChat, Chat<C>> {
+    static icon = "💬";
+
     private _persister: ChatPersister | undefined;
     private _persisterTags: string[] = [];
 
@@ -153,7 +142,7 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
                 return snapshot;
             },
             run: async (chat, init, options) => {
-                const { snapshot, runId } = await this.runChat(chat, { resources: init?.resources }, options);
+                const { snapshot, runId } = await this.runChat(chat, init, options);
                 return { snapshot, runId };
             },
             update: async (chat, data) => {
@@ -170,7 +159,7 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
     /**
      * Start a new chat.
      */
-    async startChat(input: CreateChatInput, options?: AnyOptions): Promise<Chat<C>> {
+    async startChat(input: CreateChatInput, options?: BaseOptions): Promise<Chat<C>> {
         const { context, chatId, snapshot } = await this.createChat(input, options);
 
         const chat = new Chat(
@@ -194,9 +183,12 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
         return chat;
     }
 
-    protected abstract createChat(input: CreateChatInput, options?: AnyOptions): Promise<CreateChatResult<C>>;
+    protected abstract createChat(
+        input: CreateChatInput,
+        options?: BaseOptions
+    ): Promise<CreateChatResult<C>>;
 
-    protected abstract createChatContext(input: CreateChatContextInput, options?: AnyOptions): Promise<C>;
+    protected abstract createChatContext(input: CreateChatContextInput, options?: BaseOptions): Promise<C>;
 
     protected abstract refreshChat(chat: Chat<C>): Promise<RefreshChatResult>;
 
@@ -266,31 +258,32 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
      */
     protected abstract loadChats(
         queryOptions?: CommonQueryOptions,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<ListChatsResult>;
 
     /**
      * List all chats.
      * @returns The IDs of all chats.
      */
-    async listChats(queryOptions?: CommonQueryOptions, options?: AnyOptions): Promise<string[]> {
+    async listChats(queryOptions?: CommonQueryOptions, options?: BaseOptions): Promise<string[]> {
         const { chatIds } = await this.loadChats(queryOptions, options);
         return chatIds;
     }
 
     /**
      * Runs the chat.
+     * @returns The complete new snapshot of the chat
      */
     protected abstract runChat(
         chat: Chat<C>,
         input: RunChatInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<RunChatResult>;
 
     /**
      * Run a chat.
      */
-    async run(chatId: string, input: RunChatInput, options?: AnyOptions): Promise<RunChatResult> {
+    async run(chatId: string, input: RunChatInput, options?: BaseOptions): Promise<RunChatResult> {
         const chat = await this.findChat(chatId, true);
         return this.runChat(chat!, input, options);
     }

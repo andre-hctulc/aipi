@@ -7,6 +7,8 @@ export interface ParsedInputFile {
 }
 
 export abstract class InputParser extends Resource implements WithScopes<string> {
+    static icon = "🧤";
+
     abstract covers(key: string): boolean;
 
     abstract parse(key: string, fileContent: string): ParsedInputFile;

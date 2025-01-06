@@ -73,11 +73,9 @@ export function createId(length = 8): string {
 }
 
 /**
- *
- * @param o1
- * @param o2 Overwrites o1
+ * `o2` overwrites `o1`
  */
-export function mergeObjects(o1: any, o2: any) {
+export function deepMerge(o1: any, o2: any) {
     const res = { ...o1 };
 
     if (!o2) return res;
@@ -86,7 +84,7 @@ export function mergeObjects(o1: any, o2: any) {
         const v2: any = o2[key];
 
         if (v2 && typeof v2 === "object" && !Array.isArray(v2)) {
-            res[key] = mergeObjects(o1[key], o2[key]);
+            res[key] = deepMerge(o1[key], o2[key]);
         } else if (v2 !== undefined) {
             res[key] = v2;
         }

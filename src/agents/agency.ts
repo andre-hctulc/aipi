@@ -5,7 +5,7 @@ import { AipiError } from "../errors/aipi-error.js";
 import { NotFoundError } from "../errors/common-errors.js";
 import type { Reviver } from "../persister/persister.js";
 import type { CommonQueryOptions } from "../types/query-options.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseInput, BaseOptions } from "../types/types.js";
 import {
     Agent,
     type AgentEngine,
@@ -14,7 +14,7 @@ import {
     type UpdateAgentData,
 } from "./agent.js";
 
-export interface StartAgentChatOptions {
+export interface StartAgentChatOptions extends BaseOptions {
     tools?: Tool[];
     messages?: Message[];
     resources?: any;
@@ -24,12 +24,12 @@ export interface ListAgentChatResult {
     chatIds: string[];
 }
 
-export interface UpdateAgentChatInput {
+export interface UpdateAgentChatInput extends BaseInput {
     chatId: string;
     data: any;
 }
 
-export interface CreateAgentInput {
+export interface CreateAgentInput extends BaseInput {
     config: Partial<AgentConfig>;
 }
 
@@ -51,7 +51,7 @@ export interface ListAgentsResult {
     agentIds: string[];
 }
 
-export interface UpdateAgentInput {
+export interface UpdateAgentInput extends BaseInput {
     data: UpdateAgentData;
 }
 
@@ -69,6 +69,8 @@ export abstract class Agency<C = any, CC = any>
     extends Resource
     implements Reviver<SerializedAgent, Agent<C, CC>>
 {
+    static icon = "🕵️‍♂️";
+
     constructor(protected config: AgencyConfig = {}) {
         super();
     }
@@ -84,7 +86,7 @@ export abstract class Agency<C = any, CC = any>
 
     // #### Agents ####
 
-    protected abstract createContext(input: CreateAgentContextInput, options?: AnyOptions): Promise<C>;
+    protected abstract createContext(input: CreateAgentContextInput, options?: BaseOptions): Promise<C>;
 
     private async createAgentEngine(agentId: string): Promise<AgentEngine<C, CC>> {
         const chats = await this.chats(agentId);
@@ -131,10 +133,10 @@ export abstract class Agency<C = any, CC = any>
 
     protected abstract createAgent(
         input: CreateAgentInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<CreateAgentResult<C>>;
 
-    async spawnAgent(input: CreateAgentInput, options?: AnyOptions): Promise<Agent<C, CC>> {
+    async spawnAgent(input: CreateAgentInput, options?: BaseOptions): Promise<Agent<C, CC>> {
         const { agentId, config, context } = await this.createAgent(input, options);
         return new Agent(await this.createAgentEngine(agentId), agentId, context, config);
     }

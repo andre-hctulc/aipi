@@ -10,7 +10,7 @@ import {
 } from "../../agents/agency.js";
 import type { Agent, AgentConfig } from "../../agents/agent.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
-import type { AnyOptions } from "../../types/types.js";
+import type { BaseOptions } from "../../types/types.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, reviveAssistantTool } from "./system.js";
@@ -26,7 +26,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
 
     protected override async createContext(
         input: CreateAgentContextInput,
-        options?: AnyOptions
+        options?: BaseOptions
     ): Promise<undefined> {
         return undefined;
     }
@@ -63,7 +63,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
 
     protected override async createAgent(
         input: CreateAgentInput,
-        options?: CommonOpenAIOptions & AnyOptions
+        options?: CommonOpenAIOptions & BaseOptions
     ): Promise<CreateAgentResult<undefined>> {
         const res = await this.provider.client.beta.assistants.create(
             {
@@ -130,6 +130,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
                 tools: data.config?.tools && data.config.tools.map((t) => assistantTool(t)),
                 tool_resources: data.config?.resources,
                 model: options.params?.model,
+                ...input.params,
             },
             options.params?.requestOptions
         );

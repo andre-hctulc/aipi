@@ -2,7 +2,9 @@ import { AipiError } from "../errors/aipi-error.js";
 import type { Message, Format, Tool, ToolMatch } from "../chats/types.js";
 import { Chat } from "../chats/chat.js";
 import { Completer, type CompleteOptions } from "../chats/completer.js";
-import type { AnyOptions } from "../types/types.js";
+import type { BaseOptions } from "../types/types.js";
+import type { RunChatInput } from "../chats/chats.js";
+import { deepMerge } from "../utils/system.js";
 
 export interface GenerateOptions {
     /**
@@ -10,7 +12,14 @@ export interface GenerateOptions {
      */
     messages?: Message[];
     responseFormat?: Format;
-    runOptions?: AnyOptions;
+    /**
+     * Base run options
+     */
+    runOptions?: BaseOptions;
+    /**
+     * Base run input
+     */
+    runInput?: Partial<RunChatInput>;
     completeOptions?: CompleteOptions;
     tools?: Tool[];
     /**
@@ -42,6 +51,8 @@ export interface Generated {
  * Uses {@link Chat}s to generate data.
  */
 export class DataGenerator {
+    static icon = "🧰";
+
     private _config: DataGeneratorConfig;
     private _fields = new Map<string, { tool: Omit<Tool, "name" | "type"> }>();
     readonly id: string;
@@ -85,8 +96,12 @@ export class DataGenerator {
         if (engine instanceof Chat) {
             // -- add messages to chat and run it
 
-            await engine.addMessages(messages);
-            const { snapshot } = await engine.run({ resources: { tools } }, genOpts.runOptions);
+            engine.addMessages(messages);
+            const { snapshot } = await engine.run(
+                // deepMerge does not merge arrays!
+                deepMerge(genOpts.runInput, { resources: { tools: [...tools, ...(genOpts.tools || [])] } }),
+                genOpts.runOptions
+            );
 
             toolMatches = snapshot.toolMatches;
 
