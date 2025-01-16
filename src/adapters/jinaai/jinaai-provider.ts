@@ -31,9 +31,15 @@ export class JinaAIProvider extends Provider {
             url = this.baseUrl + "/" + url;
         }
 
-        return fetch(url, {
+        const response = await fetch(url, {
             ...requestInit,
             headers,
         });
+
+        if (!response.ok) {
+            throw new Error(`JinaAI: Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+        }
+
+        return response;
     }
 }

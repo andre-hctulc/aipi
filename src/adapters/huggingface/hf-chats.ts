@@ -17,7 +17,6 @@ import type { BaseOptions } from "../../types/types.js";
 import { HFProvider } from "./hf-provider.js";
 import { createId } from "../../utils/system.js";
 import { NotSupportedError } from "../../errors/common-errors.js";
-import type { Options } from "@huggingface/inference";
 
 export class HFChats extends Chats<undefined> {
     private provider!: HFProvider;
@@ -72,7 +71,7 @@ export class HFChats extends Chats<undefined> {
     protected override async runChat(
         chat: Chat<any>,
         input: RunChatInput,
-        options?: BaseOptions<Options>
+        options?: BaseOptions<any>
     ): Promise<RunChatResult> {
         const tools = [...chat.tools, ...(input.resources?.tools || [])];
         const messages = [...chat.getMessages(), ...(input.messages || [])];
@@ -92,8 +91,10 @@ export class HFChats extends Chats<undefined> {
         const snapshot: ChatSnapshot = {
             messages: [{ textContent: choice.content, role: choice.role }],
             toolMatches:
-                choice.tool_calls?.map((t) => ({ tool: t.function.name, params: t.function.arguments })) ||
-                [],
+                choice.tool_calls?.map((t: any) => ({
+                    tool: t.function.name,
+                    params: t.function.arguments,
+                })) || [],
         };
 
         return {

@@ -1,6 +1,8 @@
 import { AipiError } from "../errors/aipi-error.js";
 import { Persister, type PersisterClearOptions, type PersisterSaveOptions } from "./persister.js";
-import hash from "stable-hash";
+import StableHash from "stable-hash";
+
+const hash = StableHash.default;
 
 export class MemoryPersister extends Persister<any, any> {
     private readonly _store: Map<any, any> = new Map();
