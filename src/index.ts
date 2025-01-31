@@ -2,7 +2,6 @@ export * from "./providers/index.js";
 export * from "./agents/index.js";
 export * from "./errors/aipi-error.js";
 export * from "./utils/index.js";
-export * from "./utils/index.js";
 export * from "./types/index.js";
 export * from "./vector-stores/index.js";
 export * from "./app/index.js";

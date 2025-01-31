@@ -1,6 +1,9 @@
 import type { JSONSchema7 } from "../types/json-schema.js";
 
-export const jsonSchemaSchema: JSONSchema7 = {
+/**
+ * JSON draft-07 meta schema
+ */
+export const jsonMetaSchema: JSONSchema7 = {
     $schema: "http://json-schema.org/draft-07/schema#",
     $id: "http://json-schema.org/draft-07/schema#",
     title: "Core schema meta-schema",

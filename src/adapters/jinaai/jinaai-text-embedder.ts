@@ -1,4 +1,5 @@
-import { TextEmbedder, type TextEmbedInput, type Vector } from "../../embeddings/index.js";
+import { TextEmbedder, type TextEmbedInput } from "../../embeddings/text-embedder.js";
+import type { Vector } from "../../embeddings/types.js";
 import type { BaseOptions } from "../../types/index.js";
 import { JinaAIProvider } from "./jinaai-provider.js";
 

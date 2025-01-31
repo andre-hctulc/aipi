@@ -1,4 +1,3 @@
-import type { RequestOptions } from "openai/core";
 import { Chat, type ChatSnapshot } from "../../chats/chat.js";
 import {
     Chats,
@@ -18,10 +17,13 @@ import type { BaseOptions } from "../../types/types.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, parseFormat } from "./system.js";
-import { createId } from "../../utils/system.js";
-import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
+import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs.mjs";
 import { NotSupportedError } from "../../errors/common-errors.js";
 import type { Instructions } from "../../agents/types.js";
+import type OpenAI from "openai";
+import { createId } from "../../utils/system.js";
+
+type RequestOptions = OpenAI.RequestOptions;
 
 export interface OpenAIAgentChatContext {
     threadId: string;

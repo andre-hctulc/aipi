@@ -111,7 +111,7 @@ export class LlamaChats extends Chats<LlamaChatContext> {
 
         const toolMatches: ToolMatch[] = [];
         const responseMessages: Message[] = [];
-        
+
         tools.forEach((tool) => {
             functions[tool.name] = defineChatSessionFunction({
                 params: tool.schema as any,
@@ -121,7 +121,6 @@ export class LlamaChats extends Chats<LlamaChatContext> {
                 },
             });
         });
-
 
         let i = 0;
 

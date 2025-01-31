@@ -18,7 +18,7 @@ import type {
     ChatCompletionMessageParam,
     ChatCompletionTool,
     FunctionParameters,
-} from "openai/resources/index";
+} from "openai/resources/index.mjs";
 import { parseFormat } from "./system.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
 import type { BaseOptions } from "../../types/types.js";
@@ -123,7 +123,7 @@ export class OpenAIChats extends Chats<undefined> {
                 },
             ],
             toolMatches: res.choices
-                .map<ToolMatch[]>(({ message, index }) => {
+                .map<ToolMatch[]>(({ index, message }) => {
                     if (!message.tool_calls) return [];
 
                     let data: any;
@@ -142,7 +142,7 @@ export class OpenAIChats extends Chats<undefined> {
                             rawParams: err ? tc.function.arguments : undefined,
                             parseError: err,
                             index: index,
-                        } as ToolMatch;
+                        };
                     });
                 })
                 .flat(),

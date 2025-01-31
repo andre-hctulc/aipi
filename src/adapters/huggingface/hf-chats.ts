@@ -15,8 +15,8 @@ import type { Message } from "../../chats/types.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
 import type { BaseOptions } from "../../types/types.js";
 import { HFProvider } from "./hf-provider.js";
-import { createId } from "../../utils/system.js";
 import { NotSupportedError } from "../../errors/common-errors.js";
+import { createId } from "../../utils/system.js";
 
 export class HFChats extends Chats<undefined> {
     private provider!: HFProvider;

@@ -1,4 +1,4 @@
-import type { RequestOptions } from "openai/core";
+import type { RequestOptions } from "openai/core.mjs";
 import {
     Agency,
     type CreateAgentContextInput,

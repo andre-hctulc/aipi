@@ -2,9 +2,9 @@ import type {
     ResponseFormatJSONObject,
     ResponseFormatJSONSchema,
     ResponseFormatText,
-} from "openai/resources/shared";
+} from "openai/resources/shared.mjs";
 import type { Format, Tool } from "../../chats/types.js";
-import type { AssistantTool } from "openai/resources/beta/assistants";
+import type { AssistantTool } from "openai/resources/beta/assistants.mjs";
 
 export function parseFormat(
     format: Format

@@ -1,7 +1,8 @@
 import type { QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types";
 import type { Falsy, NestedProperties } from "../../types/index.js";
 import { AipiError, ErrorTag } from "../../errors/aipi-error.js";
-import { getPropPaths, isFalsy, resolvePropertyPath } from "../../utils/system.js";
+import { isFalsy } from "../../utils/system.js";
+import { getProperty, setProperty, deepKeys } from "dot-prop";
 
 type Field<T extends Record<string, any> = any> = NestedProperties<T>;
 
@@ -43,11 +44,11 @@ export class OpenSearchQueryHelpers<T extends Record<string, any> = any> {
         // normalize base path
         basePath = basePath ? (basePath.endsWith(".") ? basePath : `${basePath}.`) : "";
 
-        const propPaths = getPropPaths(obj);
+        const propPaths = deepKeys(obj);
         const queries: QueryDslQueryContainer[] = [];
 
         propPaths.forEach((path) => {
-            const value = resolvePropertyPath(obj, path);
+            const value: any = getProperty(obj, path);
 
             if (Array.isArray(value)) {
                 if (value.some((v) => v && typeof v === "object")) {
