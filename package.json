@@ -2,7 +2,7 @@
     "name": "@andre-hctulc/aipi",
     "version": "0.1.0",
     "type": "module",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
         "tc": "tsc --noEmit",

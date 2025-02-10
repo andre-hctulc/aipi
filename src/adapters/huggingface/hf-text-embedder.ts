@@ -1,4 +1,3 @@
-import {} from "@huggingface/inference";
 import { TextEmbedder, type TextEmbedInput, type Vector } from "../../embeddings/index.js";
 import type { BaseOptions } from "../../types/types.js";
 import { HFProvider } from "./hf-provider.js";

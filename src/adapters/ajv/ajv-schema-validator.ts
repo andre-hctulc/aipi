@@ -1,6 +1,6 @@
-import type { JSONSchema } from "openai/lib/jsonschema.mjs";
 import { Ajv } from "ajv";
 import { JSONSchemaValidator } from "../../schemas/json-schema-validator.js";
+import type { JSONSchema } from "../../types/json-schema.js";
 
 export class AjvSchemaValidator extends JSONSchemaValidator {
     private ajv: Ajv;

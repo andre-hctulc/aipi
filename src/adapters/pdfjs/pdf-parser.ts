@@ -1,6 +1,6 @@
-import type { TextItem } from "pdfjs-dist/types/src/display/api.js";
-import { FileParser } from "../../file-parsers/file-parser.js";
 import { getDocument } from "pdfjs-dist";
+import { FileParser } from "../../file-parsers/file-parser.js";
+import type { TextItem } from "pdfjs-dist/types/src/display/api.js";
 
 /**
  * A `FileParser` implementation that parses _application/pdf_ using the `pdfjs-dist` package.

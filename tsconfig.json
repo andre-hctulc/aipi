@@ -17,12 +17,12 @@
         "inlineSources": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
-        "typeRoots": ["./node_modules/@types"],
         "allowSyntheticDefaultImports": true,
         "noImplicitOverride": true,
         "skipLibCheck": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true
     },
-    "exclude": ["node_modules", "cdk.out"]
+    "include": ["src"],
+    "exclude": ["node_modules"]
 }

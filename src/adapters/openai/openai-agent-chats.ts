@@ -17,11 +17,11 @@ import type { BaseOptions } from "../../types/types.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, parseFormat } from "./system.js";
-import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs.mjs";
 import { NotSupportedError } from "../../errors/common-errors.js";
 import type { Instructions } from "../../agents/types.js";
-import type OpenAI from "openai";
 import { createId } from "../../utils/system.js";
+import type OpenAI from "openai";
+import type { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs.mjs";
 
 type RequestOptions = OpenAI.RequestOptions;
 

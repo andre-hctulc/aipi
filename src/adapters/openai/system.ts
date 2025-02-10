@@ -1,14 +1,10 @@
-import type {
-    ResponseFormatJSONObject,
-    ResponseFormatJSONSchema,
-    ResponseFormatText,
-} from "openai/resources/shared.mjs";
-import type { Format, Tool } from "../../chats/types.js";
 import type { AssistantTool } from "openai/resources/beta/assistants.mjs";
+import type { Format, Tool } from "../../chats/types.js";
+import OpenAI from "openai";
 
 export function parseFormat(
     format: Format
-): ResponseFormatText | ResponseFormatJSONObject | ResponseFormatJSONSchema | undefined {
+): OpenAI.ResponseFormatText | OpenAI.ResponseFormatJSONObject | OpenAI.ResponseFormatJSONSchema | undefined {
     if (format.type === "json" && !format.schema) return { type: "json_object" };
 
     return {

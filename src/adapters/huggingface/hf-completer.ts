@@ -1,4 +1,3 @@
-import type {} from "@huggingface/inference";
 import { Completer, type CompleteOptions, type CompleteResult } from "../../chats/completer.js";
 import { HFProvider } from "./hf-provider.js";
 

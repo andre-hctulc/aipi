@@ -1,4 +1,4 @@
-import { type FastifyListenOptions } from "fastify";
+import { type FastifyListenOptions } from "fastify/fastify.js";
 import { Resource } from "../app/index.js";
 import type { Endpoint, EndpointParams, ParamDef, RawEndpointParams, RefinedEndpoint } from "./endpoints.js";
 import { ParamParser } from "./param-parser.js";
@@ -24,7 +24,7 @@ interface ServerErrorObject {
  */
 export abstract class AipiServer<S, Req, Res> extends Resource {
     static icon = "🌐";
-    
+
     constructor(
         readonly server: S,
         protected readonly options: AipiServerOptions = {}

@@ -1,4 +1,3 @@
-import type { RequestOptions } from "openai/core.mjs";
 import {
     Agency,
     type CreateAgentContextInput,
@@ -16,6 +15,7 @@ import type { CommonOpenAIOptions } from "./types.js";
 import { assistantTool, reviveAssistantTool } from "./system.js";
 import { OpenAIAgentChats, type OpenAIAgentChatContext } from "./openai-agent-chats.js";
 import { AipiError } from "../../errors/aipi-error.js";
+import type OpenAI from "openai";
 
 export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
     private provider!: OpenAIProvider;
@@ -93,7 +93,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
 
     protected override async deleteAgent(
         agent: Agent<undefined, OpenAIAgentChatContext>,
-        options?: RequestOptions
+        options?: OpenAI.RequestOptions
     ): Promise<void> {
         await this.provider.client.beta.assistants.del(agent.id, options);
     }

@@ -1,4 +1,4 @@
-import type { QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types";
+import type { QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types.js";
 import type { Falsy, NestedProperties } from "../../types/index.js";
 import { AipiError, ErrorTag } from "../../errors/aipi-error.js";
 import { isFalsy } from "../../utils/system.js";

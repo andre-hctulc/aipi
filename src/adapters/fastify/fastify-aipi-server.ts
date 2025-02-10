@@ -4,7 +4,7 @@ import fastify, {
     type FastifyReply,
     type FastifyRequest,
     type FastifyServerOptions,
-} from "fastify";
+} from "fastify/fastify.js";
 import { AipiServer, type AipiServerOptions } from "../../server/server.js";
 import type { RawEndpointParams, RefinedEndpoint, RequestContext } from "../../server/endpoints.js";
 

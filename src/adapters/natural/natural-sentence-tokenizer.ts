@@ -1,4 +1,4 @@
-import { SentenceTokenizer } from "natural";
+import { SentenceTokenizer } from "natural/lib/natural/index.js";
 import { Splitter, type Segment } from "../../nl/splitter.js";
 
 export class NaturalSentenceTokenizer extends Splitter {

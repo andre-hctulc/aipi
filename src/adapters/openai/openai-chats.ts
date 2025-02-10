@@ -14,15 +14,11 @@ import type { Message, ToolMatch } from "../../chats/types.js";
 import { NotSupportedError } from "../../errors/common-errors.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { CommonOpenAIOptions } from "./types.js";
-import type {
-    ChatCompletionMessageParam,
-    ChatCompletionTool,
-    FunctionParameters,
-} from "openai/resources/index.mjs";
 import { parseFormat } from "./system.js";
 import type { CommonQueryOptions } from "../../types/query-options.js";
 import type { BaseOptions } from "../../types/types.js";
 import { createId } from "../../utils/system.js";
+import type { ChatCompletionMessageParam, ChatCompletionTool, FunctionParameters } from "openai/resources/index.mjs";
 
 export class OpenAIChats extends Chats<undefined> {
     private provider!: OpenAIProvider;

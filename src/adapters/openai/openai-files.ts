@@ -1,7 +1,8 @@
-import type { RequestOptions, Uploadable } from "openai/core.mjs";
+import type { Uploadable } from "openai/uploads.mjs";
 import { Resource } from "../../app/index.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import type { FilePurpose } from "openai/resources/files.mjs";
+import type { RequestOptions } from "openai/core.mjs";
 
 const supportedByFileSearch = new Set([
     "text/x-c",

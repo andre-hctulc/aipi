@@ -1,5 +1,6 @@
-import OpenAI, { type ClientOptions } from "openai";
+import OpenAI from "openai";
 import { Provider } from "../../providers/provider.js";
+import type { ClientOptions } from "openai";
 
 export class OpenAIProvider extends Provider {
     readonly client: OpenAI;
