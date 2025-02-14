@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "../errors/common-errors.js";
 import { getConstructors } from "../utils/reflection.js";
 import type { Truthy } from "../utils/utility-types.js";
 import { AipiApp } from "./app.js";
@@ -66,6 +67,12 @@ export abstract class AipiRegistry {
 
     find<T extends Resource = Resource>(Resource: abstract new (...args: any) => T): T | null {
         return this.findAll(Resource)[0] || null;
+    }
+
+    require<T extends Resource = Resource>(Resource: abstract new (...args: any) => T): T {
+        const resource = this.find(Resource);
+        if (!resource) throw new ResourceNotFoundError(Resource);
+        return resource;
     }
 
     findAll<T extends Resource = Resource>(Resource: abstract new (...args: any) => T): T[] {

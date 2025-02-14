@@ -14,3 +14,4 @@ export * from "./nl/index.js";
 export * from "./persister/index.js";
 export * from "./chats/index.js";
 export * from "./embeddings/index.js";
+export * from "./models/index.js";
