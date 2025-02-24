@@ -47,6 +47,9 @@ export abstract class SchemaBuilder<S> {
         errors: string[];
     };
 
+    /**
+     * @param adjust Adjust the schema before validation
+     */
     isValid(adjust = false): boolean {
         let schema = this._schema;
         if (adjust && this.adjust) {
@@ -73,7 +76,6 @@ export abstract class SchemaBuilder<S> {
 
     /**
      * Builds the schema
-     * @param copy Whether to copy the schema before returning it. Default is true
      * @returns The built schema
      * @throws AipiError if the schema is invalid
      */

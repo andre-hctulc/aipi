@@ -5,6 +5,7 @@ import { JinaAIProvider } from "./jinaai-provider.js";
 
 export interface JinaAITextEmbedParams {
     model?: "jina-embeddings-v3" | (string & {});
+    // SEE https://jina.ai/de/news/jina-embeddings-v3-a-frontier-multilingual-embedding-model/
     task?:
         | "text-matching"
         | "none"

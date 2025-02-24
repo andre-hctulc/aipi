@@ -1,7 +1,7 @@
 /**
  * Represents metadata for an AI model.
  */
-export interface AIModelMetadata {
+export interface ModelMetadata {
     /** Unique reference ID for the model (e.g., "openai/gpt-4"). */
     model_ref: string;
     /** The name of the AI model (e.g., "gpt-4", "bert"). */

@@ -44,6 +44,7 @@ export interface ChatEngine<C = any> {
     refresh(chat: Chat<C>): Promise<ChatSnapshot>;
     run(chat: Chat<C>, init: RunInit, options?: BaseOptions): Promise<RunResponse>;
     update(chat: Chat<C>, data: UpdateChatData): Promise<void>;
+    delete(chat: Chat<C>): Promise<void>;
     /**
      *
      * This is called when the chat changes.
@@ -134,6 +135,7 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
             return snapshot;
         });
     }
+    
     addMessage(...messages: Message[]): void {
         this.addMessages(messages);
     }
@@ -192,6 +194,9 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
         return messages.length > 0 ? messages[messages.length - 1] : null;
     }
 
+    /**
+     * Checks if the chat has messages.
+     */
     hasMessages(): boolean {
         return this.getMessages().length > 0;
     }
@@ -273,5 +278,16 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
 
     updateContext(context: C): void {
         this._context = context;
+    }
+
+    private _deleted = false;
+
+    async delete(): Promise<void> {
+        await this.engine.delete(this);
+        this._deleted = true;
+    }
+
+    get deleted(): boolean {
+        return this._deleted;
     }
 }

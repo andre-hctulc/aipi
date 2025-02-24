@@ -13,7 +13,7 @@ export interface GenerateOptions {
     messages?: Message[];
     responseFormat?: Format;
     /**
-     * Base run options
+     * Base run options. Use {@link messages} to provide custom messages.
      */
     runOptions?: BaseOptions;
     /**
@@ -96,10 +96,12 @@ export class DataGenerator {
         if (engine instanceof Chat) {
             // -- add messages to chat and run it
 
-            engine.addMessages(messages);
             const { snapshot } = await engine.run(
                 // deepMerge does not merge arrays!
-                deepMerge(genOpts.runInput, { resources: { tools: [...tools, ...(genOpts.tools || [])] } }),
+                deepMerge(genOpts.runInput, {
+                    messages,
+                    resources: { tools: [...tools, ...(genOpts.tools || [])] },
+                }),
                 genOpts.runOptions
             );
 

@@ -131,7 +131,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         input: RunChatInput,
         options?: RunOpenAIChatOptions & BaseOptions
     ): Promise<RunChatResult> {
-        const tools = [...chat.resources.tools, ...(input.resources?.tools || [])];
+        const tools = [...(chat.resources?.tools || []), ...(input.resources?.tools || [])];
         // This does not respond with messages, these have to be fetched separately
         const run = await this.provider.client.beta.threads.runs.createAndPoll(
             chat.context.threadId,
@@ -149,6 +149,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
                     role: msg.role as any,
                     attachments: msg.attachments,
                 })),
+                //model: "gpt-4-turbo",
             },
             options?.requestOptions
         );

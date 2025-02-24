@@ -25,6 +25,7 @@ export interface AgentEngine<C = any, CC = any> {
     startChat(agent: Agent<C, CC>, input: CreateChatInput, options?: BaseOptions): Promise<Chat<CC>>;
     update(agent: Agent<C, CC>, data: UpdateAgentData): Promise<void>;
     refresh(agent: Agent<C, CC>): Promise<AgentConfig>;
+    delete(agent: Agent<C, CC>): Promise<void>;
 }
 
 export interface SerializedAgent {
@@ -93,5 +94,16 @@ export class Agent<C = any, CC = any> implements Persistable<SerializedAgent> {
 
     updateContext(context: C): void {
         this._context = context;
+    }
+
+    private _deleted = false;
+
+    async delete(): Promise<void> {
+        await this.engine.delete(this);
+        this._deleted = true;
+    }
+
+    get deleted(): boolean {
+        return this._deleted;
     }
 }

@@ -1,11 +1,11 @@
 import { Resource } from "../app/index.js";
-import type { AIModelMetadata } from "./models-types.js";
+import type { ModelMetadata } from "./models-types.js";
 
 /**
  * A simple registry for models metadata
  */
 export class ModelsRegistry extends Resource {
-    private map: Map<string, Partial<AIModelMetadata>> = new Map();
+    private map: Map<string, Partial<ModelMetadata>> = new Map();
 
     constructor() {
         super();
@@ -19,7 +19,7 @@ export class ModelsRegistry extends Resource {
         this.map.delete(modelRef);
     }
 
-    findModel(modelRef: string): Partial<AIModelMetadata> | null {
+    findModel(modelRef: string): Partial<ModelMetadata> | null {
         const metadata = this.map.get(modelRef);
         if (!metadata) {
             return null;
@@ -31,18 +31,18 @@ export class ModelsRegistry extends Resource {
         return this.map.has(modelRef);
     }
 
-    registerModel(metadata: Partial<AIModelMetadata>) {
+    registerModel(metadata: Partial<ModelMetadata>) {
         if (!metadata.model_ref) {
             throw new Error("Model reference is required");
         }
         this.map.set(metadata.model_ref, metadata);
     }
 
-    registerModels(...models: Partial<AIModelMetadata>[]) {
+    registerModels(...models: Partial<ModelMetadata>[]) {
         models.forEach((metadata) => this.registerModel(metadata));
     }
 
-    findMany(...modelRefs: string[]): Partial<AIModelMetadata>[] {
+    findMany(...modelRefs: string[]): Partial<ModelMetadata>[] {
         return modelRefs.map((model) => {
             const metadata = this.findModel(model);
             if (!metadata) {
@@ -52,7 +52,7 @@ export class ModelsRegistry extends Resource {
         });
     }
 
-    get(modelRef: string): Partial<AIModelMetadata> | null {
+    get(modelRef: string): Partial<ModelMetadata> | null {
         const metadata = this.findModel(modelRef);
         if (!metadata) return null;
         return metadata;

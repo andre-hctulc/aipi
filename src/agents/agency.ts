@@ -110,6 +110,7 @@ export abstract class Agency<C = any, CC = any>
             },
             update: (agent, data) => this.alterAgent(agent, { data }),
             refresh: (agent) => this.refreshAgent(agent),
+            delete: (agent) => this.killAgent(agent.id),
         };
     }
 

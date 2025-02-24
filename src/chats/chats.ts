@@ -19,7 +19,7 @@ export interface CreateChatInput extends BaseInput {
     resources?: Partial<ChatResources>;
     snapshot?: Partial<ChatSnapshot>;
     /**
-     * Persist the chat after creation. This has no effect if when no persister is set.
+     * Persist the chat after creation. This has no effect when no persister is set.
      * @default true
      */
     persist?: boolean;
@@ -152,6 +152,9 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
                 if (this._persister && chat.autoPersist) {
                     await this._persister.save(this.chatKey(chat.id), chat.serialize());
                 }
+            },
+            delete: async (chat) => {
+                await this.deleteChat(chat.id);
             },
         };
     }
