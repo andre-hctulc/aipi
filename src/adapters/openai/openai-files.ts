@@ -50,7 +50,7 @@ export abstract class OpenAIFiles extends Resource {
         purpose: FilePurpose,
         requestOptions?: RequestOptions
     ): Promise<{ fileId: string }> {
-        const res = await this.provider.client.files.create(
+        const res = await this.provider.main.files.create(
             {
                 purpose,
                 file,
@@ -62,6 +62,6 @@ export abstract class OpenAIFiles extends Resource {
     }
 
     async deleteFile(fileId: string, requestOptions?: RequestOptions): Promise<void> {
-        await this.provider.client.files.del(fileId, requestOptions);
+        await this.provider.main.files.del(fileId, requestOptions);
     }
 }

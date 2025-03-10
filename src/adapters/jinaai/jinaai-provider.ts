@@ -7,7 +7,7 @@ export interface JinaAIProviderInit {
     baseUrl?: string;
     apiKey?: string;
 }
-export class JinaAIProvider extends Provider {
+export class JinaAIProvider extends Provider<undefined> {
     readonly baseUrl: string;
     #apiKey: string = "";
 
@@ -15,6 +15,10 @@ export class JinaAIProvider extends Provider {
         super();
         if (init?.apiKey) this.#apiKey = init.apiKey;
         this.baseUrl = init?.baseUrl ?? "https://api.jina.ai/v1";
+    }
+
+    protected override provide(): undefined {
+        return undefined;
     }
 
     /**

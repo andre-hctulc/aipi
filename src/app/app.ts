@@ -17,7 +17,7 @@ export class AipiApp {
         readonly registry: AipiRegistry,
         private options: BootstrapOptions
     ) {
-        this.devMode = options.devMode || false;
+        this.devMode = options.printRegistry || false;
         this.useDefaults();
     }
 

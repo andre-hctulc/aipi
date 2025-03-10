@@ -13,7 +13,6 @@
         "dot-prop": "^9.0.0",
         "mathjs": "^13.2.0",
         "node-llama-cpp": "^3.3.0",
-        "node-nlp": "^5.0.0-alpha.5",
         "openai": "^4.67.3",
         "pdfjs-dist": "^4.9.155",
         "sentence-splitter": "^5.0.0",
@@ -26,6 +25,9 @@
         "@types/wink-tokenizer": "^4.0.6",
         "ajv": "^8.17.1",
         "fastify": "^5.1.0",
-        "natural": "^8.0.1"
+        "i": "^0.3.7",
+        "natural": "^8.0.1",
+        "node-nlp": "^5.0.0-alpha.5",
+        "npm": "^11.1.0"
     }
 }

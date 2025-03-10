@@ -21,6 +21,13 @@ export class NotFoundError extends AipiError {
         super({
             message: `${subject} not found` + (message ? `. ${message}` : ""),
             tags: [ErrorTag.NOT_FOUND],
+            httpStatus: 404,
         });
+    }
+}
+
+export class NotMountedError extends AipiError {
+    constructor() {
+        super({ message: "Not yet mounted", httpStatus: 500 });
     }
 }

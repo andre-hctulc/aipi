@@ -75,7 +75,7 @@ export class HFChats extends Chats<undefined> {
     ): Promise<RunChatResult> {
         const tools = [...chat.tools, ...(input.resources?.tools || [])];
         const messages = [...chat.getMessages(), ...(input.messages || [])];
-        const res = await this.provider.hf.chatCompletion(
+        const res = await this.provider.main.chatCompletion(
             {
                 messages: messages.map((m) => ({ content: m.textContent || "", role: m.role })),
                 tools: tools.map((tool) => ({

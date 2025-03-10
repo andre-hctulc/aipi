@@ -10,7 +10,7 @@ export class HFTextEmbedder extends TextEmbedder {
     }
 
     override async embed({ text, ...input }: TextEmbedInput, options?: BaseOptions<any>): Promise<Vector[]> {
-        const vectors = await this.provider.hf.featureExtraction({ inputs: text, ...input.params }, {});
+        const vectors = await this.provider.main.featureExtraction({ inputs: text, ...input.params }, {});
         return vectors as Vector[];
     }
 }

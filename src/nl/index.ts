@@ -1,1 +1,1 @@
-export * from "./splitter.js";
+export * from "./tokenizer.js";

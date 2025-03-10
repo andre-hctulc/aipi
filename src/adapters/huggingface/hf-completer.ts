@@ -9,7 +9,7 @@ export class HFCompleter extends Completer {
     }
 
     override async complete(text: string, options?: CompleteOptions<any>): Promise<CompleteResult> {
-        const { generated_text, details } = await this.provider.hf.textGeneration(
+        const { generated_text, details } = await this.provider.main.textGeneration(
             { inputs: text },
             options?.params
         );

@@ -63,7 +63,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
     ): Promise<CreateChatResult<OpenAIAgentChatContext>> {
         // A run is executed in a thread. A thread can be cerated manually. Then we would need to create a thread and then a tun.
         // We use this helper method to create a thread and run it in one go.
-        const thread = await this.provider.client.beta.threads.create(
+        const thread = await this.provider.main.beta.threads.create(
             {
                 messages: input.snapshot?.messages?.map((m) => ({
                     content: m.textContent || "",
@@ -97,7 +97,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         requestOptions?: RequestOptions
     ): Promise<LoadChatResult<OpenAIAgentChatContext> | null> {
         const [_, threadId] = chatId.split("/");
-        const res = await this.provider.client.beta.threads.retrieve(threadId, requestOptions);
+        const res = await this.provider.main.beta.threads.retrieve(threadId, requestOptions);
         return {
             context: { assistantId: this.assistantId, threadId: res.id },
             resources: { resources: res.tool_resources, tools: [] },
@@ -109,14 +109,14 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         chat: Chat<OpenAIAgentChatContext>,
         input: UpdateChatInput
     ): Promise<void> {
-        await this.provider.client.beta.threads.update(chat.context.threadId, {
+        await this.provider.main.beta.threads.update(chat.context.threadId, {
             tool_resources: input.data?.resources?.resources,
         });
     }
 
     protected override async deleteChat(chatId: string, requestOptions?: RequestOptions): Promise<void> {
         const [_, threadId] = chatId.split("/");
-        await this.provider.client.beta.threads.del(threadId, requestOptions);
+        await this.provider.main.beta.threads.del(threadId, requestOptions);
     }
 
     protected override loadChats(
@@ -133,7 +133,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
     ): Promise<RunChatResult> {
         const tools = [...(chat.resources?.tools || []), ...(input.resources?.tools || [])];
         // This does not respond with messages, these have to be fetched separately
-        const run = await this.provider.client.beta.threads.runs.createAndPoll(
+        const run = await this.provider.main.beta.threads.runs.createAndPoll(
             chat.context.threadId,
             {
                 assistant_id: chat.context.assistantId,
@@ -192,7 +192,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         requestOptions?: RequestOptions
     ): Promise<void> {
         for (const message of messages) {
-            await this.provider.client.beta.threads.messages.create(
+            await this.provider.main.beta.threads.messages.create(
                 chat.context.threadId,
                 {
                     role: message.role as any,
@@ -209,7 +209,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         messageId: string,
         options?: CommonOpenAIOptions
     ): Promise<void> {
-        await this.provider.client.beta.threads.messages.del(
+        await this.provider.main.beta.threads.messages.del(
             chat.id,
             messageId,
             options?.params?.requestOptions
@@ -221,7 +221,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         queryOptions: CommonQueryOptions = {},
         options: CommonOpenAIOptions = {}
     ): Promise<Message[]> {
-        const res = await this.provider.client.beta.threads.messages.list(
+        const res = await this.provider.main.beta.threads.messages.list(
             chat.context.threadId,
             {
                 limit: queryOptions.limit,
@@ -247,7 +247,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         messageId: string,
         options?: CommonOpenAIOptions
     ): Promise<Message | null> {
-        const res = await this.provider.client.beta.threads.messages.retrieve(
+        const res = await this.provider.main.beta.threads.messages.retrieve(
             chat.id,
             messageId,
             options?.params?.requestOptions

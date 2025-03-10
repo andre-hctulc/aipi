@@ -1,7 +1,7 @@
 import { SentenceTokenizer } from "natural/lib/natural/index.js";
-import { Splitter, type Segment } from "../../nl/splitter.js";
+import { Tokenizer, type Token } from "../../nl/tokenizer.js";
 
-export class NaturalSentenceTokenizer extends Splitter {
+export class NaturalSentenceTokenizer extends Tokenizer {
     private instance: SentenceTokenizer;
 
     constructor(abbreviations: string[] = [], sentenceDemarkers?: string[]) {
@@ -9,7 +9,7 @@ export class NaturalSentenceTokenizer extends Splitter {
         this.instance = new SentenceTokenizer(abbreviations, sentenceDemarkers);
     }
 
-    override tokenize(text: string): Segment[] {
+    override tokenize(text: string): Token[] {
         return this.instance
             .tokenize(text)
             .map((value) => ({ tag: "sentence", value, children: [], range: [0, 0], text: value }));

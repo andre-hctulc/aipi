@@ -35,7 +35,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         agentId: string,
         options?: CommonOpenAIOptions
     ): Promise<LoadAgentResult<undefined> | null> {
-        const res = await this.provider.client.beta.assistants.retrieve(
+        const res = await this.provider.main.beta.assistants.retrieve(
             agentId,
             options?.params?.requestOptions
         );
@@ -65,7 +65,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         input: CreateAgentInput,
         options?: CommonOpenAIOptions & BaseOptions
     ): Promise<CreateAgentResult<undefined>> {
-        const res = await this.provider.client.beta.assistants.create(
+        const res = await this.provider.main.beta.assistants.create(
             {
                 model: options?.params?.model || "gpt-4-o",
                 description: input.config.description,
@@ -95,14 +95,14 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         agent: Agent<undefined, OpenAIAgentChatContext>,
         options?: OpenAI.RequestOptions
     ): Promise<void> {
-        await this.provider.client.beta.assistants.del(agent.id, options);
+        await this.provider.main.beta.assistants.del(agent.id, options);
     }
 
     protected override async loadAgents(
         queryOptions?: CommonQueryOptions,
         options?: CommonOpenAIOptions
     ): Promise<ListAgentsResult> {
-        const res = await this.provider.client.beta.assistants.list(
+        const res = await this.provider.main.beta.assistants.list(
             {
                 limit: queryOptions?.limit,
                 after: queryOptions?.after,
@@ -121,7 +121,7 @@ export class OpenAIAgency extends Agency<undefined, OpenAIAgentChatContext> {
         options: CommonOpenAIOptions = {}
     ): Promise<void> {
         const data = input.data;
-        await this.provider.client.beta.assistants.update(
+        await this.provider.main.beta.assistants.update(
             agent.id,
             {
                 instructions: data.config?.instructions?.content,

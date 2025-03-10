@@ -11,7 +11,7 @@ export class OpenAITextEmbedder extends TextEmbedder {
     }
 
     override async embed({ text, params }: TextEmbedInput, options?: CommonOpenAIOptions): Promise<Vector[]> {
-        const { data } = await this.provider.client.embeddings.create(
+        const { data } = await this.provider.main.embeddings.create(
             {
                 input: text,
                 model: options?.params?.model || "gpt-4",

@@ -4,21 +4,21 @@ import {
     type splitOptions,
     type TxtParentNodeWithSentenceNodeContent,
 } from "sentence-splitter";
-import { Splitter, type Segment } from "../../nl/splitter.js";
+import { Tokenizer, type Token, type TokenizeOptions } from "../../nl/tokenizer.js";
 
 /**
  * A `Tokenizer` implementation using the `sentence-splitter` package.
  */
-export class SentenceSplitterTokenizer extends Splitter {
+export class SentenceSplitterTokenizer extends Tokenizer {
     constructor(private options?: splitOptions) {
         super();
     }
 
-    override tokenize(text: string, options?: { params?: splitOptions }): Segment[] {
+    override tokenize(text: string, options?: TokenizeOptions & { params?: splitOptions }): Token[] {
         return split(text, options?.params || this.options).map((node) => this.parseNode(node));
     }
 
-    private parseNode(node: TxtParentNodeWithSentenceNodeContent): Segment {
+    private parseNode(node: TxtParentNodeWithSentenceNodeContent): Token {
         return {
             tag: this.snakeCase(node.type),
             text: node.raw,

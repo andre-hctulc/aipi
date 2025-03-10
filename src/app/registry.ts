@@ -5,7 +5,7 @@ import { AipiApp } from "./app.js";
 import { Resource } from "./resource.js";
 
 export interface BootstrapOptions {
-    devMode?: boolean;
+    printRegistry?: boolean;
 }
 
 const DEFAULT_PRIORITY = 100;
@@ -54,7 +54,7 @@ export abstract class AipiRegistry {
             })
         );
 
-        if (options.devMode) {
+        if (options.printRegistry) {
             console.log(this.print());
         }
 

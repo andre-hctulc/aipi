@@ -1,7 +1,6 @@
 import { Resource } from "../app/index.js";
-import type { BaseOptions } from "../types/types.js";
 
-export type TextPartTag =
+export type TokenTag =
     | "sentence"
     | "word"
     | "punctuation"
@@ -22,18 +21,25 @@ export type TextPartTag =
     | "ordinal"
     | "character";
 
-export interface Segment {
-    tag: (string & {}) | TextPartTag;
+export interface Token {
+    tag: (string & {}) | TokenTag;
     text: string;
     range: [number, number] | readonly [number, number];
-    children: Segment[];
+    children: Token[];
+}
+
+export interface TokenizeOptions {
+    /**
+     * alpha2
+     */
+    lang?: string;
 }
 
 /**
  * Base class for all kinds of tokenizers or other text splitters.
  */
-export abstract class Splitter extends Resource {
+export abstract class Tokenizer extends Resource {
     static icon = "🔪";
-    
-    abstract tokenize(text: string, options?: BaseOptions): Segment[];
+
+    abstract tokenize(text: string, options?: TokenizeOptions): Token[];
 }

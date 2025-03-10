@@ -13,7 +13,7 @@ export class OpenAICompleter extends Completer {
         text: string,
         options?: CompleteOptions & CommonOpenAIOptions
     ): Promise<CompleteResult> {
-        const res = await this.provider.client.completions.create(
+        const res = await this.provider.main.completions.create(
             {
                 model: options?.params?.model ?? "gpt-3.5-turbo-instruct",
                 prompt: text,

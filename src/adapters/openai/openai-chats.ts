@@ -83,7 +83,7 @@ export class OpenAIChats extends Chats<undefined> {
     ): Promise<RunChatResult> {
         const tools = [...chat.tools, ...(input.resources?.tools || [])];
         const messages = [...chat.getMessages(), ...(input.messages || [])];
-        const res = await this.provider.client.chat.completions.create(
+        const res = await this.provider.main.chat.completions.create(
             {
                 // only allowed when tools provided
                 tool_choice: tools.length ? "auto" : undefined,
