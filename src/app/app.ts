@@ -1,15 +1,11 @@
-import { Resource } from "./resource.js";
-import { AipiRegistry, type BootstrapOptions } from "./registry.js";
-import type { WithScopes } from "./interfaces.js";
-import { LiteralParser } from "../file-parsers/literal-parser.js";
-import { CommonParamParser } from "../server/common-param-parser.js";
-import { FileSystemStorage } from "../persister/fs-file-storage.js";
-import { DefaultInputParser } from "../input/default-input-parser.js";
-import { MemoryPersister } from "../persister/memory-persister.js";
+import type { Resource } from "./resource.js";
+import type { AipiRegistry, BootstrapOptions } from "./registry.js";
+import type { WithScope } from "./interfaces.js";
 import { ResourceNotFoundError } from "../errors/common-errors.js";
 
-const DEFAULT_RESOURCE_PRIORITY = 50;
-
+/**
+ * Emitted by a registry on bootstrap.
+ */
 export class AipiApp {
     readonly devMode: boolean;
 
@@ -18,24 +14,6 @@ export class AipiApp {
         private options: BootstrapOptions
     ) {
         this.devMode = options.printRegistry || false;
-        this.useDefaults();
-    }
-
-    /**
-     * Register default resources
-     */
-    private useDefaults() {
-        this.registry
-            // memory persister
-            .use(new MemoryPersister(), DEFAULT_RESOURCE_PRIORITY)
-            // file literal parser
-            .use(new LiteralParser(), DEFAULT_RESOURCE_PRIORITY)
-            // param parser
-            .use(new CommonParamParser(), DEFAULT_RESOURCE_PRIORITY)
-            // file system storage (program root)
-            .use(new FileSystemStorage(), DEFAULT_RESOURCE_PRIORITY)
-            // input parser
-            .use(new DefaultInputParser(), DEFAULT_RESOURCE_PRIORITY);
     }
 
     /**
@@ -72,7 +50,7 @@ export class AipiApp {
     /**
      * Find a resource that covers the given item
      */
-    cover<S, R extends Resource & WithScopes<S>>(
+    cover<S, R extends Resource & WithScope<S>>(
         item: S,
         Resource: abstract new (...args: any) => R
     ): R | null {
@@ -83,10 +61,7 @@ export class AipiApp {
     /**
      * Find all resources that cover the given item
      */
-    coverAll<S, R extends Resource & WithScopes<S>>(
-        item: S,
-        Resource: abstract new (...args: any) => R
-    ): R[] {
+    coverAll<S, R extends Resource & WithScope<S>>(item: S, Resource: abstract new (...args: any) => R): R[] {
         return this.getAll(Resource).filter((c) => c.covers(item));
     }
 

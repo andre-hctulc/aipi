@@ -1,4 +1,4 @@
-import { Resource, type WithScopes } from "../app/index.js";
+import { Resource, type WithScope } from "../app/index.js";
 import type { InputPart } from "./input-builder.js";
 
 export interface ParsedInputFile {
@@ -6,7 +6,7 @@ export interface ParsedInputFile {
     separator: string;
 }
 
-export abstract class InputParser extends Resource implements WithScopes<string> {
+export abstract class InputParser extends Resource implements WithScope<string> {
     static icon = "🧤";
 
     abstract covers(key: string): boolean;

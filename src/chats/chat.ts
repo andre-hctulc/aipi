@@ -5,6 +5,7 @@ import { deepMerge } from "../utils/system.js";
 import type { Format, Message, Tool, ToolMatch } from "./types.js";
 import type { Chats } from "./chats.js";
 import type { BaseInput, BaseOptions } from "../types/types.js";
+import { OpenAI } from "openai";
 
 export interface ChatSnapshot {
     messages: Message[];
@@ -19,7 +20,8 @@ export interface ChatResources {
     /**
      * Resources to use for the chat.
      */
-    resources: any;
+    toolResources: any;
+    [key: string]: any;
 }
 
 export interface RunResponse {
@@ -115,7 +117,7 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
     }
 
     get resources(): any {
-        return this._resources.resources;
+        return this._resources.toolResources;
     }
 
     get context(): C {
@@ -135,7 +137,7 @@ export class Chat<C = any> implements Persistable<SerializedChat> {
             return snapshot;
         });
     }
-    
+
     addMessage(...messages: Message[]): void {
         this.addMessages(messages);
     }

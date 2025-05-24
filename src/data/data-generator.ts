@@ -13,7 +13,7 @@ export interface GenerateOptions {
     messages?: Message[];
     responseFormat?: Format;
     /**
-     * Base run options. Use {@link messages} to provide custom messages.
+     * Run options.
      */
     runOptions?: BaseOptions;
     /**

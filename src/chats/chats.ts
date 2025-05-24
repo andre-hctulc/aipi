@@ -170,7 +170,7 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
             chatId,
             {
                 tools: input.resources?.tools || [],
-                resources: input.resources?.resources,
+                toolResources: input.resources?.toolResources,
             },
             snapshot,
             context,
@@ -303,7 +303,7 @@ export abstract class Chats<C = any> extends Resource implements Reviver<Seriali
      */
     async addMessages(chatId: string, messages: Message[]): Promise<void> {
         const chat = await this.findChat(chatId, true);
-        await this.pushMessages(chat!, messages);
+        return this.pushMessages(chat!, messages);
     }
 
     /**

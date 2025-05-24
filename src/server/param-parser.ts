@@ -1,5 +1,5 @@
 import { Resource } from "../app/index.js";
-import type { WithScopes } from "../app/interfaces.js";
+import type { WithScope } from "../app/interfaces.js";
 import { AipiError } from "../errors/aipi-error.js";
 import type { ParamDef } from "./endpoints.js";
 
@@ -10,7 +10,7 @@ export class ParamError extends AipiError {
     }
 }
 
-export abstract class ParamParser extends Resource implements WithScopes<ParamDef> {
+export abstract class ParamParser extends Resource implements WithScope<ParamDef> {
     static icon = "﹫";
 
     abstract covers(param: ParamDef): boolean;

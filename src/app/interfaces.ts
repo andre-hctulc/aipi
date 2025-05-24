@@ -1,3 +1,3 @@
-export interface WithScopes<S> {
+export interface WithScope<S> {
     covers(scope: S): boolean;
 }

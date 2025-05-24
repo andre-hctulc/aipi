@@ -14,6 +14,7 @@ export class SentenceSplitterTokenizer extends Tokenizer {
         super();
     }
 
+
     override tokenize(text: string, options?: TokenizeOptions & { params?: splitOptions }): Token[] {
         return split(text, options?.params || this.options).map((node) => this.parseNode(node));
     }

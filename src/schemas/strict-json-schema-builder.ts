@@ -3,17 +3,36 @@ import type { JSONSchema, JSONSchemaTypeName } from "../types/json-schema.js";
 
 /**
  * Builds schemas suitable for function calls.
- * 
- * These schemas are more strict, with these features:
- * 
- * - All properties are required
+ *
+ *Strict schemas have the following features:
+ * - All object properties are required
  * - No ambiguous types
- * - No additional properties
- * - No $schema, $id, $ref, $defs, $comment, title, format
+ * - No additional properties, must explicitly be set to false
  *
  * Some of these features can be adjusted on non fitting schemas.
  */
 export class StrictJSONSchemaBuilder extends JSONSchemaBuilder {
+    private static readonly supportedKeys: ReadonlySet<string> = new Set([
+        "type",
+        "description",
+        "properties",
+        "required",
+        "enum",
+        "items",
+        // "format",
+        // "default",
+        "additionalProperties",
+    ]);
+    private static readonly supportedFormats: ReadonlySet<string> = new Set(["date-time", "email", "uri"]);
+    private static readonly supportedTypes: Set<JSONSchemaTypeName> = new Set<JSONSchemaTypeName>([
+        "array",
+        "boolean",
+        "integer",
+        "number",
+        "object",
+        "string",
+    ]);
+
     /**
      * Mutates the schema so it can be used in the OpenAI API.
      * If the schema can not be transformed to a valid schema, it returns null.
@@ -29,7 +48,7 @@ export class StrictJSONSchemaBuilder extends JSONSchemaBuilder {
         // Root schema must be object
         if (schema.type !== "object") {
             return {
-                errors: ["Root schema must be object"],
+                errors: ["Root schema must be 'object'"],
             };
         }
 
@@ -42,37 +61,24 @@ export class StrictJSONSchemaBuilder extends JSONSchemaBuilder {
                 return;
             }
 
-            const allowedTypes: Set<JSONSchemaTypeName> = new Set<JSONSchemaTypeName>([
-                "array",
-                "boolean",
-                "integer",
-                "number",
-                "object",
-                "string",
-            ]);
-
             // Check if type is allowed
-            if (!allowedTypes.has(subSchema.type as any)) {
+            if (!StrictJSONSchemaBuilder.supportedTypes.has(subSchema.type as any)) {
                 errors.push(`Type not allowed: ${subSchema.type}`);
             }
 
-            const allowProps: Set<keyof JSONSchema> = new Set<keyof JSONSchema>([
-                "properties",
-                "type",
-                "items",
-                "enum",
-                "required",
-                "description",
-                "additionalProperties",
-                "title",
-                "format",
-            ]);
+            // Check if format is allowed
+            if (
+                subSchema.format !== undefined &&
+                StrictJSONSchemaBuilder.supportedTypes.has(subSchema.format as any)
+            ) {
+                errors.push(`Format not allowed: ${subSchema.type}`);
+            }
 
             // Remove all properties that are not allowed
             Object.keys(subSchema).forEach((key) => {
                 if (key.startsWith("$")) return;
 
-                if (!allowProps.has(key as any)) {
+                if (!StrictJSONSchemaBuilder.supportedKeys.has(key)) {
                     errors.push(`Property not allowed: ${key}`);
                 }
             });
@@ -84,16 +90,22 @@ export class StrictJSONSchemaBuilder extends JSONSchemaBuilder {
     protected override adjust(schema: JSONSchema): JSONSchema {
         return new JSONSchemaBuilder(schema, { copySchema: false })
             .transform((subSchema) => {
-                delete subSchema.$schema;
-                delete subSchema.$id;
-                delete subSchema.$ref;
-                delete subSchema.$defs;
-                delete subSchema.$comment;
-                delete subSchema.title;
-                delete subSchema.format;
+                for (const key in subSchema) {
+                    if (!StrictJSONSchemaBuilder.supportedKeys.has(key)) {
+                        delete (subSchema as any)[key];
+                    }
+                }
+
+                if (
+                    subSchema.format !== undefined &&
+                    !StrictJSONSchemaBuilder.supportedFormats.has(subSchema.format)
+                ) {
+                    delete subSchema.format;
+                }
 
                 if (subSchema.type === "object") {
                     subSchema.additionalProperties = false;
+                    // Required must be set for all properties
                     subSchema.required = Object.keys(subSchema.properties || {});
                 }
 

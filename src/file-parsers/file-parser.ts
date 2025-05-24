@@ -1,6 +1,6 @@
 import { AipiError, ErrorTag } from "../errors/aipi-error.js";
 import { Resource } from "../app/resource.js";
-import type { WithScopes } from "../app/index.js";
+import type { WithScope } from "../app/index.js";
 import type { BaseConfig, BaseOptions } from "../types/types.js";
 
 export interface FileReaderConfig extends BaseConfig {
@@ -23,9 +23,9 @@ export type MimeTypeLike = File | string;
 /**
  * Parses the text from files. Use the `LiteralParser` for plain text files.
  */
-export abstract class FileParser extends Resource implements WithScopes<File> {
+export abstract class FileParser extends Resource implements WithScope<File> {
     static icon = "📄";
-    
+
     // default config values
     private static readonly DEFAULT_PRIORITY = 100;
 

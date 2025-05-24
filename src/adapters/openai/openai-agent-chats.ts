@@ -36,6 +36,8 @@ export interface RunOpenAIChatOptions {
     requestOptions?: RequestOptions;
 }
 
+// TODO static method that creates the assistant?
+
 export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
     constructor(readonly assistantId: string) {
         super();
@@ -70,7 +72,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
                     attachments: m.attachments,
                     role: m.role as any,
                 })),
-                tool_resources: input.resources?.resources,
+                tool_resources: input.resources?.toolResources,
             },
             requestOptions
         );
@@ -100,7 +102,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         const res = await this.provider.main.beta.threads.retrieve(threadId, requestOptions);
         return {
             context: { assistantId: this.assistantId, threadId: res.id },
-            resources: { resources: res.tool_resources, tools: [] },
+            resources: { toolResources: res.tool_resources, tools: [] },
             snapshot: { messages: [], toolMatches: [] },
         };
     }
@@ -110,7 +112,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
         input: UpdateChatInput
     ): Promise<void> {
         await this.provider.main.beta.threads.update(chat.context.threadId, {
-            tool_resources: input.data?.resources?.resources,
+            tool_resources: input.data?.resources?.toolResources,
         });
     }
 
@@ -149,7 +151,7 @@ export class OpenAIAgentChats extends Chats<OpenAIAgentChatContext> {
                     role: msg.role as any,
                     attachments: msg.attachments,
                 })),
-                //model: "gpt-4-turbo",
+                // model: "gpt-4-turbo",
             },
             options?.requestOptions
         );

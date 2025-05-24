@@ -4,6 +4,8 @@ import type { Truthy } from "../utils/utility-types.js";
 import { AipiApp } from "./app.js";
 import { Resource } from "./resource.js";
 
+export type AipiPreset = (registry: AipiRegistry) => void;
+
 export interface BootstrapOptions {
     printRegistry?: boolean;
 }
@@ -40,8 +42,13 @@ export abstract class AipiRegistry {
 
         return text;
     }
-
     private registry: Map<Function, { resource: Resource; priority: number }[]> = new Map();
+    readonly presets: AipiPreset[] = [];
+
+    preset(preset: AipiPreset): this {
+        this.presets.push(preset);
+        return this;
+    }
 
     async bootstrap(options: BootstrapOptions = {}): Promise<AipiApp> {
         const entries = Array.from(this.registry.values()).flat();
@@ -53,6 +60,12 @@ export abstract class AipiRegistry {
                 await entry.resource.mount(app, options);
             })
         );
+
+        if (this.presets) {
+            for (const preset of this.presets) {
+                await preset(this);
+            }
+        }
 
         if (options.printRegistry) {
             console.log(this.print());

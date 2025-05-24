@@ -20,14 +20,19 @@ export interface BuildSchemaOptions {
      */
     adjust?: boolean;
     /**
-     * Validate the schema before building it
+     * Validate the schema before building it.
+     * This receives the adjusted schema.
+     *
+     * Use {@link SchemaBuilder.validate} to validate before adjusting.
+     * 
      * @default true
      */
     validate?: boolean;
 }
 
 /**
- * JSON Schema Builder
+ * JSON Schema Builder.
+ * Takes a source schema and allows to validate, adjust and build it.
  */
 export abstract class SchemaBuilder<S> {
     protected _schema: S;
@@ -67,11 +72,12 @@ export abstract class SchemaBuilder<S> {
     }
 
     /**
+     * Uses {@link structuredClone} to copy the schema.
+     *
      * Override this method to implement custom copy logic
      */
     copy(schema: S): S {
-        // TODO faster?
-        return JSON.parse(JSON.stringify(schema));
+        return structuredClone(schema);
     }
 
     /**
@@ -87,7 +93,7 @@ export abstract class SchemaBuilder<S> {
         }
 
         if (validate !== false) {
-            const { errors } = this.validate(this._schema);
+            const { errors } = this.validate(result);
 
             if (errors.length) {
                 throw new AipiError({ message: "Schema validation failed", cause: errors });
